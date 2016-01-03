@@ -22,7 +22,7 @@ Download from http://example.com/FIXME.
 
 The library contains an entrypoint for a sample implementation decoding app
 
-    $ java -jar ais-decoder-0.1.0-standalone.jar [MSG-TYPE-BIT-MASK] [N-THREADS]
+    $ java -jar ais-0.1.0-SNAPSHOT-standalone.jar [MSG-TYPE-BIT-MASK] [N-THREADS]
 
 ## Options
 
@@ -51,7 +51,7 @@ N-THREADS:         number of decoding threads
 ###  Decoding messages
 #### type 1, 2, 3 
 
-     $ cat ais-messages | java -jar ais-0.1.0-standalone.jar 7 1
+     $ cat ais-messages | java -jar ais-0.1.0-SNAPSHOT-standalone.jar 7 1
 
 ```bash
 thread-0
