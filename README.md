@@ -34,15 +34,15 @@ MSG-TYPE-BIT-MASK: bit mask representing message types to decode.
 |  3   |   1,2    |
 |  5   |   1,3    |
 | 16   |    5     |
+| 23   | 1,2,3,5  |
 
-
-| type | bit notation |
-|------|--------------|
-| 1    |     2^0      |
-| 2    |     2^1      |
-| 3    |     2^2      |
-| ..   |     ..       |
-| n    |     2^(n-1)  |
+| type | decimal value |
+|------|---------------|
+| 1    |      2^0      |
+| 2    |      2^1      |
+| 3    |      2^2      |
+| ..   |      ..       |
+| n    |    2^(n-1)    |
 
 N-THREADS:         number of decoding threads
 
@@ -51,7 +51,7 @@ N-THREADS:         number of decoding threads
 ###  Decoding messages
 #### type 1, 2, 3 
 
-     $ cat ais-messages | java -jar ais-0.1.0-SNAPSHOT-standalone.jar 7 1
+    $ cat ais-messages-simple | java -jar ais-0.1.0-SNAPSHOT-standalone.jar 7 1
 
 ```bash
 thread-0
@@ -134,12 +134,16 @@ The following represents an unpacked sentence payload for a type 1 message: (```
 ```
 The ```:len``` field in the field specification map is the number of bits representing the particular field.
 
-Adding support for a new message type requires creating a new type specification mapping with properly implemented type handler deserializers ```:fn```.
+Adding support for a new message type requires creating a new type specification mapping with properly implemented type handler deserializers ```:fn```.  See http://catb.org/gpsd/AIVDM.html for more information.
 
 ## TODO
+### lib
+- Parse timestamp field from message tag block
+- Trim extraneous characters from type 5 string fields
+- Implement more message types
+### testing
 - More unit tests
 - More integration tests
-- More message type support
 
 
 
