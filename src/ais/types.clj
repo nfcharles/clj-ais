@@ -24,7 +24,7 @@
     (xformer (I scale d-places bits))))
 
 (defn b [bits]
-  (if (== (u bits) 0) "False" "True"))
+  (if (== (u bits) 0) false true))
 
 (defn e [vocab bits]
   (vocab (u bits)))

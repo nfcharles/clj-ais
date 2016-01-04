@@ -4,11 +4,15 @@
   (:require [ais.types :as ais-types])
   (:gen-class))
 
+(defn- rot-sq [x]
+  (let [factor (if (< x 0) -1 1)]
+    (int (* factor (* x x)))))
+
 (def base-mapping (list
   {:len  2 :desc "Repeat Indicator"         :tag "repeat"   :fn ais-types/u}
   {:len 30 :desc "MMSI"                     :tag "mmsi"     :fn ais-types/u}
   {:len  4 :desc "Navigation Status"        :tag "status"   :fn (partial ais-types/e ais-vocab/navigation-status)}
-  {:len  8 :desc "Rate of Turn (ROT)"       :tag "turn"     :fn (partial ais-types/I (/ 1.0 4.733) 3 #(* %1 %1))}
+  {:len  8 :desc "Rate of Turn (ROT)"       :tag "turn"     :fn (partial ais-types/I (/ 1.0 4.733) 3 rot-sq)}
   {:len 10 :desc "Speed Over Ground (SOG)"  :tag "speed"    :fn (partial ais-types/U (/ 1.0 10) 1)}
   {:len  1 :desc "Position Accuracy"        :tag "accuracy" :fn ais-types/b}
   {:len 28 :desc "Longtitude"               :tag "lon"      :fn (partial ais-types/I (/ 1.0 600000) 4)}
@@ -73,7 +77,7 @@
   {:len   1 :desc "Spare"                  :tag "spare"      :fn ais-types/x}
   {:len  10 :desc "Designated Area Code"   :tag "dac"        :fn ais-types/u}
   {:len   6 :desc "Functional ID"          :tag "fid"        :fn ais-types/u}
-  {:len 920 :desc "Data"                   :tag "data"       :fn ais-types/d}
+  {:len 920 :desc "Data"                   :tag "data"       :fn ais-types/d} ; d handler not implemented
 ))
 
 (def type-mapping {
@@ -82,14 +86,4 @@
  3 base-mapping
  4 mapping-4
  5 mapping-5
- 6 mapping-6
 })
-
-
-(defn supported-type? [type]
-  (condp = type
-   1 true
-   2 true
-   3 true
-   5 false
-   false))

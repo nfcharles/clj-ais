@@ -1,4 +1,4 @@
-# ais
+# clj-ais
 
 clj-ais is a library for decoding ais messages.  It was designed with reference to the following document http://catb.org/gpsd/AIVDM.html#IMO236 and tested against the following online decoder -- which support a subset of message types -- http://rl.se/aivdm.  Also, integration tests were performed against http://fossies.org/linux/gpsd/test/sample.aivdm, which contains an exhastive list of ais messages and their decoded values.
 
@@ -76,7 +76,7 @@ writing /tmp/foo.json
 
 #### Single sentence decoding - type 1
 ```bash
-$ lein run -m ais.core "\!AIVDM,1,1,,B,177KQJ5000G?tO\`K>RA1wUbN0TKH,0*5C" | python -m json.tool
+$ lein run -m ais.core "\!AIVDM,1,1,,A,15RTgt0PAso;90TKcjM8h6g208CQ,0*4A" | python -m json.tool
 ```
 
 #### Output
@@ -96,10 +96,23 @@ $ lein run -m ais.core "\!AIVDM,1,1,,B,177KQJ5000G?tO\`K>RA1wUbN0TKH,0*5C" | pyt
     "spare": "000", 
     "speed": 12.3, 
     "status": "Under way using engine", 
-    "turn": 720.0032105295371
+    "turn": -720
 }
 ```
 
+## Testing
+
+Run all tests.
+
+    $ lein test
+
+Run module tests
+
+    $ lein test ais.util-test
+
+Run integration tests
+
+    $ lein test ais.integration.type_1-test
 
 ### Bugs
 There are no known bugs -- which is not to say there are NO bugs.  Current unit test suite passes but is by no means exhaustive.
@@ -139,7 +152,7 @@ Adding support for a new message type requires creating a new type specification
 ## TODO
 ### lib
 - Parse timestamp field from message tag block
-- Implement more message types
+- Implement more message types: 18,24,19,21,20
 
 ### testing
 - More unit tests
