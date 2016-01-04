@@ -141,6 +141,7 @@ Adding support for a new message type requires creating a new type specification
 - Parse timestamp field from message tag block
 - Trim extraneous characters from type 5 string fields
 - Implement more message types
+
 ### testing
 - More unit tests
 - More integration tests
