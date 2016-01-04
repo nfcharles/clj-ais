@@ -90,19 +90,9 @@
     (str full-msg "*" (ais-util/checksum full-msg))))
 
 ;;---
-;; File I/O
-;;---
-
-(defn parse-from-file [filename]
-  (with-open [rdr (clojure.java.io/reader filename)]
-    (doseq [line (line-seq rdr)]
-      (println line))))
-
-;;---
 ;; Entrypoint
 ;;---
 
-; input (Integer. (nth args 0))
 
 (defn -main
   "I don't do a whole lot ... yet."
