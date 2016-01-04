@@ -1,5 +1,6 @@
 (ns ais.types
   (:require [ais.util :as ais-util])
+  (:require [clojure.string :as string])
   (:gen-class))
 
 (defn u [bits]
@@ -39,7 +40,7 @@
              (subs bits 6)
              (inc index)
              (conj ret (e vocab (subs bits 0 6)))))
-      (apply str ret))))
+      (string/replace (apply str ret) #"\s*(?:[@]*)?\s*$" ""))))
 
 (defn x [bits] bits)
 

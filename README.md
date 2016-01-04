@@ -139,7 +139,6 @@ Adding support for a new message type requires creating a new type specification
 ## TODO
 ### lib
 - Parse timestamp field from message tag block
-- Trim extraneous characters from type 5 string fields
 - Implement more message types
 
 ### testing
