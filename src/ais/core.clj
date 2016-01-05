@@ -1,6 +1,6 @@
 (ns ais.core
   (:require [clojure.data.json :as json])
-  (:require [ais.extractors  :as ais-extractors])
+  (:require [ais.extractors  :as ais-ex])
   (:require [ais.mappings  :as ais-mappings])
   (:require [ais.types :as ais-types])
   (:require [ais.util :as ais-util])
@@ -61,13 +61,14 @@
     (decode-binary-payload binary-payload specs)))
 
 (defn parse-envelope [envelope]
-  (let [bits (payload->binary (ais-extractors/extract-payload envelope))
+  (let [fill (ais-ex/extract-fill-bits envelope)
+        bits (ais-util/pad (payload->binary (ais-ex/extract-payload envelope)) fill)
        [type binary-payload] (split-type-binary-payload bits)]
     (parse-binary type binary-payload)))
-    ;(if (not-any? nil? envelope-cksum)
+
 
 (defn parse [line]
-  (let [[envelope checksum] (ais-extractors/extract-envelope-checksum line)]
+  (let [[envelope checksum] (ais-ex/extract-envelope-checksum line)]
     (if (not-any? nil? [envelope checksum])
       (if (valid-envelope? envelope checksum)
         (try
@@ -82,10 +83,10 @@
 ;; ---
 
 (defn parse-group [msgs]
-  (let [[msg-1 msg-2] (sort-by ais-extractors/extract-fragment-number msgs)
-        fill (ais-extractors/extract-fill-bits msg-2)
-        payload (reduce str (map ais-extractors/extract-payload [msg-1 msg-2]))
-        full-msg (str (ais-extractors/extract-packet-type msg-1) ",1,1,1,A," payload "," fill)
+  (let [[msg-1 msg-2] (sort-by ais-ex/extract-fragment-number msgs)
+        fill (ais-ex/extract-fill-bits msg-2)
+        payload (reduce str (map ais-ex/extract-payload [msg-1 msg-2]))
+        full-msg (str (ais-ex/extract-packet-type msg-1) ",1,1,1,A," payload "," fill)
        ]
     (str full-msg "*" (ais-util/checksum full-msg))))
 
