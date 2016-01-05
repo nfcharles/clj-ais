@@ -82,7 +82,7 @@ $ lein run -m ais.core "\!AIVDM,1,1,,A,15RTgt0PAso;90TKcjM8h6g208CQ,0*4A" | pyth
 #### Output
 ```json
 {
-    "accuracy": "True", 
+    "accuracy": true, 
     "course": 224.0, 
     "heading": 215, 
     "lat": 48.38163333333333, 
@@ -90,7 +90,7 @@ $ lein run -m ais.core "\!AIVDM,1,1,,A,15RTgt0PAso;90TKcjM8h6g208CQ,0*4A" | pyth
     "maneuver": "Not available (default)", 
     "mmsi": 371798000, 
     "radio": 34017, 
-    "raim": "False", 
+    "raim": false, 
     "repeat": 0, 
     "second": 33, 
     "spare": "000", 
