@@ -22,36 +22,22 @@ Download from http://example.com/FIXME.
 
 The library contains an entrypoint for a sample implementation decoding app
 
-    $ java -jar ais-0.1.0-SNAPSHOT-standalone.jar [MSG-TYPE-BIT-MASK] [N-THREADS]
+    $ java -jar ais-0.1.0-SNAPSHOT-standalone.jar [OUTPUT-FILE] [MSG-TYPE-LIST] [N-THREADS]
 
 ## Options
 
-MSG-TYPE-BIT-MASK: bit mask representing message types to decode.
+OUTPUT-FILE:   Output filename
 
-#### Examples
-| mask | messages |
-|------|----------|
-|  3   |   1,2    |
-|  5   |   1,3    |
-| 16   |    5     |
-| 23   | 1,2,3,5  |
+MSG-TYPE-LIST: Comma separated list of message types
 
-| type | decimal value |
-|------|---------------|
-| 1    |      2^0      |
-| 2    |      2^1      |
-| 3    |      2^2      |
-| ..   |      ..       |
-| n    |    2^(n-1)    |
-
-N-THREADS:         number of decoding threads
+N-THREADS:     Number of decoding threads
 
 ## Examples
 
 ###  Decoding messages
 #### type 1, 2, 3 
 
-    $ cat ais-messages-simple | java -jar ais-0.1.0-SNAPSHOT-standalone.jar 7 1
+    $ cat ais-messages-simple | java -jar ais-0.1.0-SNAPSHOT-standalone.jar /tmp/foo 1,2,3 1
 
 ```bash
 thread-0
@@ -63,7 +49,7 @@ writing /tmp/foo.json
 ```
   
 #### type 5
-    $  cat ais-messages-type-5 | java -jar ais-0.1.0-SNAPSHOT-standalone.jar 16 3 2>dropped.log
+    $  cat ais-messages-type-5 | java -jar ais-0.1.0-SNAPSHOT-standalone.jar /tmp/foo 5 3 2>dropped.log
 
 ```bash
 thread-0
@@ -151,7 +137,6 @@ Adding support for a new message type requires creating a new type specification
 
 ## TODO
 ### lib
-- Decoder module writes files to hardcoded /tmp/foo.json  -- make runtime parameter
 - Parse timestamp field from message tag block
 - .json is standard output format.  Support .csv output also.
 - Implement more message types: 18,24,19,21,20
