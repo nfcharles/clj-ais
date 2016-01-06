@@ -33,6 +33,7 @@
 ;; ---
 ;; Core
 ;; ---
+
 (defn valid-envelope? [envelope cksum]
   (= (ais-util/checksum envelope) cksum))
 
@@ -66,13 +67,20 @@
        [type binary-payload] (split-type-binary-payload bits)]
     (parse-binary type binary-payload)))
 
+;; TODO: Parse all available fields in tag block.
+(defn parse-tag-block [line]
+  (let [timestamp (ais-ex/extract-timestamp line)]
+    (if (nil? timestamp) 
+        (hash-map "timestamp" timestamp)
+        (hash-map "timestamp" (ais-util/timestamp->iso (* 1000 (read-string timestamp)))))))
 
 (defn parse [line]
-  (let [[envelope checksum] (ais-ex/extract-envelope-checksum line)]
+  (let [metadata (parse-tag-block line)
+       [envelope checksum] (ais-ex/extract-envelope-checksum line)]
     (if (not-any? nil? [envelope checksum])
       (if (valid-envelope? envelope checksum)
         (try
-          (parse-envelope envelope)
+	  (merge metadata (parse-envelope envelope))
           (catch Exception e
 	    {"error" (str "Exception: " e)}))
         {"error" (str "Checksum verification failed: " envelope checksum)})
@@ -83,17 +91,18 @@
 ;; ---
 
 (defn parse-group [msgs]
+  ;; Reassemble group message parts into complete message.
   (let [[msg-1 msg-2] (sort-by ais-ex/extract-fragment-number msgs)
-        fill (ais-ex/extract-fill-bits msg-2)
+        tag-block (ais-ex/extract-tag-block msg-1)
         payload (reduce str (map ais-ex/extract-payload [msg-1 msg-2]))
-        full-msg (str (ais-ex/extract-packet-type msg-1) ",1,1,1,A," payload "," fill)
+        fill (ais-ex/extract-fill-bits msg-2)
+        msg (str (ais-ex/extract-packet-type msg-1) ",1,1,1,A," payload "," fill)
        ]
-    (str full-msg "*" (ais-util/checksum full-msg))))
+    (str "\\" tag-block "\\!" msg "*" (ais-util/checksum msg))))
 
 ;;---
 ;; Entrypoint
 ;;---
-
 
 (defn -main
   "I don't do a whole lot ... yet."
