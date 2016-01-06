@@ -137,7 +137,6 @@ Adding support for a new message type requires creating a new type specification
 
 ## TODO
 ### lib
-- Parse timestamp field from message tag block
 - .json is standard output format.  Support .csv output also.
 - Implement more message types: 18,24,19,21,20
 
