@@ -5,6 +5,8 @@
 ;; Matchers
 ;;
 
+(def tag-block-matcher #"^\\(.+)\\")
+
 (def packet-type-matcher #"(AIVD[MO])")
 
 (def group-matcher #"g:\d-(\d-\d\d\d\d).+AIVD[MO],\d,\d,\d?,([AB]?)")
@@ -30,6 +32,9 @@
 ;;
 ;; Extractors
 ;;
+
+(defn extract-tag-block [message]
+  (nth (re-find tag-block-matcher message) 1))
 
 (defn extract-packet-type [message]
   (nth (re-find packet-type-matcher message) 1))
