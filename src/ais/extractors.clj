@@ -9,6 +9,8 @@
 
 (def group-matcher #"g:\d-(\d-\d\d\d\d).+AIVD[MO],\d,\d,\d?,([AB]?)")
 
+(def timestamp-matcher #"c:(\d*)")
+
 (def channel-matcher #"AIVD[MO],\d,\d,\d?,([AB]?)")
 
 (def envelope-matcher #"(AIVD[MO],\d,\d,\d?,[AB]?,.+,\d\*[A-F0-9][A-F0-9])")
@@ -35,6 +37,9 @@
 (defn extract-group [message]
   (if-let [group (re-find group-matcher message)]
     (apply str (rest group))))
+
+(defn extract-timestamp [message]
+  (nth (re-find timestamp-matcher message) 1))
 
 (defn extract-envelope [message]
   (nth (re-find envelope-matcher message) 1))

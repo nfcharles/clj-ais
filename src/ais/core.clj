@@ -67,12 +67,17 @@
     (parse-binary type binary-payload)))
 
 
+(defn parse-tag-block [line]
+  (let [timestamp (read-string (ais-ex/extract-timestamp line))]
+    (hash-map "timestamp" (ais-util/timestamp->iso (* 1000 timestamp)))))
+
 (defn parse [line]
-  (let [[envelope checksum] (ais-ex/extract-envelope-checksum line)]
+  (let [metadata (parse-tag-block line)
+       [envelope checksum] (ais-ex/extract-envelope-checksum line)]
     (if (not-any? nil? [envelope checksum])
       (if (valid-envelope? envelope checksum)
         (try
-          (parse-envelope envelope)
+	  (merge metadata (parse-envelope envelope))
           (catch Exception e
 	    {"error" (str "Exception: " e)}))
         {"error" (str "Checksum verification failed: " envelope checksum)})

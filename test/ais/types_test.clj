@@ -30,13 +30,13 @@
 ;; TODO: functions should return native boolean types, not stringified values
 (deftest b-test
   (testing "Parse binary true"
-    (is (= (b "1") "True")))
+    (is (= (b "1") true)))
   (testing " Parse binary false"
-    (is (= (b "0") "False")))
+    (is (= (b "0") false)))
   (testing "Parse binary true - extra bits"
-    (is (= (b "001") "True")))
+    (is (= (b "001") true)))
   (testing " Parse binary false -extra bits"
-    (is (= (b "0000") "False"))))
+    (is (= (b "0000") false))))
 
 
 (def e-test-vocab { 1 "foo" 2 "bar" 3 "baz" })
