@@ -22,7 +22,7 @@ Download from http://example.com/FIXME.
 
 The library contains an entrypoint for a sample implementation decoding app
 
-    $ java -jar ais-0.1.0-SNAPSHOT-standalone.jar [OUTPUT-FILE] [MSG-TYPE-LIST] [N-THREADS]
+    $ java -jar ais-0.1.0-SNAPSHOT-standalone.jar [OUTPUT-FILE] [MSG-TYPE-LIST] [N-THREADS] [OUTPUT-TYPE]
 
 ## Options
 
@@ -32,12 +32,14 @@ MSG-TYPE-LIST: Comma separated list of message types
 
 N-THREADS:     Number of decoding threads
 
+OUTPUT-TYPE: csv | json
+
 ## Examples
 
 ###  Decoding messages
 #### type 1, 2, 3 
 
-    $ cat ais-messages-simple | java -jar ais-0.1.0-SNAPSHOT-standalone.jar /tmp/foo 1,2,3 1
+    $ cat ais-messages-simple | java -jar ais-0.1.0-SNAPSHOT-standalone.jar /tmp/foo 1,2,3 1 json
 
 ```bash
 thread-0
@@ -49,7 +51,7 @@ writing /tmp/foo.json
 ```
   
 #### type 5
-    $  cat ais-messages-type-5 | java -jar ais-0.1.0-SNAPSHOT-standalone.jar /tmp/foo 5 3 2>dropped.log
+    $  cat ais-messages-type-5 | java -jar ais-0.1.0-SNAPSHOT-standalone.jar /tmp/foo 5 3 json 2>dropped.log
 
 ```bash
 thread-0
@@ -60,9 +62,11 @@ writing /tmp/foo.json
 "Elapsed time: 554.953214 msecs"
 ```
 
-#### Single sentence decoding - type 1
+### Single sentence decoding
+
+#### Type 1 - json output
 ```bash
-$ lein run -m ais.core "\!AIVDM,1,1,,A,15RTgt0PAso;90TKcjM8h6g208CQ,0*4A" | python -m json.tool
+$ lein run -m ais.core json "\c:1448312100,t:1448312099*00\!AIVDM,1,1,,A,15RTgt0PAso;90TKcjM8h6g208CQ,0*4A" | python -m json.tool
 ```
 
 #### Output
@@ -82,8 +86,36 @@ $ lein run -m ais.core "\!AIVDM,1,1,,A,15RTgt0PAso;90TKcjM8h6g208CQ,0*4A" | pyth
     "spare": "000", 
     "speed": 12.3, 
     "status": "Under way using engine", 
+    "timestamp": "20151123T155500Z",
     "turn": -720
 }
+```
+
+#### Type 1 - csv output
+```bash
+$ lein run -m ais.core csv "\c:1448312100,t:1448312099*00\!AIVDM,1,1,,A,15RTgt0PAso;90TKcjM8h6g208CQ,0*4A" | python -m json.tool
+```
+
+#### Output
+```json
+[
+    "20151123T155500Z", 
+    0, 
+    371798000, 
+    "Under way using engine", 
+    -720, 
+    12.3, 
+    true, 
+    -123.39538333333333, 
+    48.38163333333333, 
+    224.0, 
+    215, 
+    33, 
+    "Not available (default)", 
+    "000", 
+    false, 
+    34017
+]
 ```
 
 ## Testing
@@ -137,8 +169,6 @@ Adding support for a new message type requires creating a new type specification
 
 ## TODO
 ### lib
-- Parse timestamp field from message tag block
-- .json is standard output format.  Support .csv output also.
 - Implement more message types: 18,24,19,21,20
 
 ### testing

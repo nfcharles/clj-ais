@@ -2,7 +2,16 @@
   (:require [clojure.string :as string])
   (:require [ais.vocab :as ais-vocab])
   (:require [ais.types :as ais-types])
+  (:require [ais.util :as ais-util])
+  (:require [ais.extractors :as ais-ex])
   (:gen-class))
+
+
+(def tag-block (hash-map
+  "c" { :desc "Timestamp" 
+        :tag "timestamp" 
+        :ex ais-ex/extract-timestamp 
+        :fn #(ais-util/timestamp->iso (* 1000 (read-string %))) } ))
 
 (defn- rot-sq [x]
   (let [factor (if (< x 0) -1 1)]

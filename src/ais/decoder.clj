@@ -5,15 +5,44 @@
   (:require [ais.core :as ais-core])
   (:require [clojure.core.async :as async])
   (:require [clojure.data.json :as json])
+  (:require [clojure.data.csv :as csv])
   (:require [clojure.pprint :as pprint])
   (:gen-class))
 
-;;;; Sample implemenation of decoding application
+;   ____                        _        ____                     _           
+;  / ___|  __ _ _ __ ___  _ __ | | ___  |  _ \  ___  ___ ___   __| | ___ _ __ 
+;  \___ \ / _` | '_ ` _ \| '_ \| |/ _ \ | | | |/ _ \/ __/ _ \ / _` |/ _ \ '__|
+;   ___) | (_| | | | | | | |_) | |  __/ | |_| |  __/ (_| (_) | (_| |  __/ |   
+;  |____/ \__,_|_| |_| |_| .__/|_|\___| |____/ \___|\___\___/ \__,_|\___|_|   
+;                        |_|                                                  
 
-;; CONSTANTS
+
 (def buffer-size 1000)
 
 (def msg-types (into {} (for [k (range 1 28)] [k false])))
+
+;;---
+;; Writers
+;; ---
+
+(defmulti write-data 
+  (fn [output-type & _] 
+    output-type))
+
+(defmethod write-data "json" [_ writer data ]
+  (.write writer (json/write-str data)))
+
+(defmethod write-data "csv" [_ writer data]
+  (csv/write-csv writer data))
+
+(defmethod write-data :default [_ writer data]
+  (write-data "csv" writer data))
+
+(defn- write [name output-type lines]
+  (let [filename (str  name "." output-type)]
+    (println (str "writing " filename))
+    (with-open [w (clojure.java.io/writer filename)]
+      (write-data output-type w lines))))
 
 ;;---
 ;; Util
@@ -35,9 +64,9 @@
 ;; Core
 ;;---
 
-(defn- decode [msg]
+(defn- decode [output-type msg]
   (try
-    (ais-core/parse msg)
+    (ais-core/parse output-type msg)
     (catch Exception e
       (.println *err* (str "Error decoding - " msg ". " e))))) 
 
@@ -69,22 +98,17 @@
            (async/close! out-ch))))
     out-ch))
 
-(defn- process [n in-ch]
+(defn- process [output-type n in-ch]
   (let [out-ch (async/chan buffer-size)]
     (dotimes [i n]
       (println (str "thread-" i))
       (async/thread
         (loop []
           (when-let [line (async/<!! in-ch)]
-	    (async/>!! out-ch (decode line))
+	    (async/>!! out-ch (decode output-type line))
 	    (recur)))
         (async/close! out-ch)))
     out-ch))
-
-(defn- write [name lines]
-  (let [filename (str  name ".json")]
-    (println (str "writing " filename))
-    (spit filename lines)))
 
 (defn- collect [in-ch]
   (let [out-ch (async/chan)]
@@ -95,12 +119,12 @@
           (async/>!! out-ch msgs))))
     out-ch))
 
-(defn run [in-ch output-filename types nthreads]
+(defn run [in-ch output-filename types nthreads output-type]
   (let [filtered (split-stream in-ch types)
-       	processed (process nthreads filtered)
+       	processed (process output-type nthreads filtered)
         msgs (async/<!! (collect processed))]
     (println (str "writing " (count msgs) " messages."))
-    (write output-filename (json/write-str msgs))))
+    (write output-filename output-type msgs)))
 
 (def stdin-reader
   (java.io.BufferedReader. *in*))
@@ -110,5 +134,6 @@
   (let [output-filename (nth args 0)
         types (handled-types (parse-types (nth args 1)))
         nthreads (Integer. (nth args 2))
+	output-type (nth args 3)
         stream (async/to-chan (line-seq stdin-reader))]
-    (time (run stream output-filename types nthreads))))
+    (time (run stream output-filename types nthreads output-type))))
