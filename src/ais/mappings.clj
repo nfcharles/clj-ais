@@ -9,9 +9,17 @@
 
 (def tag-block (hash-map
   "c" { :desc "Timestamp" 
-        :tag "timestamp" 
-        :ex ais-ex/extract-timestamp 
-        :fn #(ais-util/timestamp->iso (* 1000 (read-string %))) } ))
+        :tag  "timestamp" 
+        :ex   ais-ex/extract-timestamp 
+        :fn   #(ais-util/timestamp->iso (* 1000 (read-string %))) } 
+  "s" { :desc "Source"
+        :tag  "station"
+        :ex   ais-ex/extract-source
+        :fn   #(identity %)} 
+  "n" { :desc "Line"
+        :tag  "line"
+        :ex   ais-ex/extract-line
+        :fn   #(read-string %) } ))
 
 (defn- rot-sq [x]
   (let [factor (if (< x 0) -1 1)]
@@ -89,7 +97,7 @@
   {:len 920 :desc "Data"                   :tag "data"       :fn ais-types/d} ; d handler not implemented
 ))
 
-(def type-mapping {
+(def msg-spec {
  1 base-mapping
  2 base-mapping
  3 base-mapping

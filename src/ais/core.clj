@@ -74,10 +74,10 @@
 
 (defn parse-envelope [acc collector envelope]
   (let [bits (ais-util/pad (payload->binary (ais-ex/extract-payload envelope)) (ais-ex/extract-fill-bits envelope))]
-    (decode-binary-payload (ais-mappings/type-mapping (ais-types/u (subs bits 0 6)))
-                           acc 
-    			   collector
-			   (subs bits 6))))
+    (decode-binary-payload (ais-mappings/msg-spec (ais-types/u (subs bits 0 6)))
+                            acc 
+    			    collector
+			    (subs bits 6))))
 
 (defn parse-tag-block [acc collector line tags]
   (loop [t tags
@@ -94,7 +94,7 @@
 (defn parse [output-type line]
   (let [[acc collector] (output-type-handler output-type)
         [envelope checksum] (ais-ex/extract-envelope-checksum line)
-         metadata (parse-tag-block acc collector line ["c"])]
+         metadata (parse-tag-block acc collector line ["c" "s" "n"])] ; Let's not hardcode this
     (if (not-any? nil? [envelope checksum])
       (if (valid-envelope? envelope checksum)
         (try

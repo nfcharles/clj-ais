@@ -7,11 +7,15 @@
 
 (def tag-block-matcher #"^\\(.+)\\")
 
-(def packet-type-matcher #"(AIVD[MO])")
-
 (def group-matcher #"g:\d-(\d-\d\d\d\d).+AIVD[MO],\d,\d,\d?,([AB]?)")
 
-(def timestamp-matcher #"c:(\d*)")
+(def timestamp-matcher #"^\\.*c:(\d*).*\\")
+
+(def source-matcher #"^\\.*s:(\w*).*\\")
+
+(def line-matcher #"^\\.*n:(\d*).*\\")
+
+(def packet-type-matcher #"(AIVD[MO])")
 
 (def channel-matcher #"AIVD[MO],\d,\d,\d?,([AB]?)")
 
@@ -43,8 +47,17 @@
   (if-let [group (re-find group-matcher message)]
     (apply str (rest group))))
 
+; TODO: parse int here
 (defn extract-timestamp [message]
   (nth (re-find timestamp-matcher message) 1))
+
+(defn extract-source [message]
+  (nth (re-find source-matcher message) 1))
+
+(defn extract-line [message]
+  (if-let [line-num (nth (re-find line-matcher message) 1)]
+    (read-string line-num)
+    nil))
 
 (defn extract-envelope [message]
   (nth (re-find envelope-matcher message) 1))
