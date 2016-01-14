@@ -4,13 +4,14 @@ clj-ais is a library for decoding ais messages.  It was designed with reference 
 
 
 #### Supported Types
-| Type | Description                    |
-| ---- | ------------------------------ |
-| 1    | Position Report Class A        |
-| 2    | Position Report Class A        |
-| 3    | Position Report Class A        |
-| 4    | Base Station Report            |
-| 5    | Static and Voyage Related Data |
+| Type | Description                         |
+| ---- | ------------------------------------|
+|  1   | Position Report Class A             |
+|  2   | Position Report Class A             |
+|  3   | Position Report Class A             |
+|  4   | Base Station Report                 |
+|  5   | Static and Voyage Related Data      |
+| 18   | Standard Class B CS Position Report |
 
 While the above messages are the only types supported today, clj-ais has the necessary interfaces for extending type support.  See _Extending_ for more information about extending the library.
 
@@ -169,7 +170,7 @@ Adding support for a new message type requires creating a new type specification
 
 ## TODO
 ### lib
-- Implement more message types: 18,24,19,21,20
+- Implement more message types: 24,19,21,20
 
 ### testing
 - More unit tests
