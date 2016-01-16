@@ -86,18 +86,19 @@
     
 (defn parse [output-type line]
   (let [[acc collector] (output-type-handler output-type)
-        [envelope checksum] (ais-ex/extract-envelope-checksum line)
-         metadata (parse-tag-block acc collector line ["c" "s" "n"])] ; Let's not hardcode this
+        [envelope checksum] (ais-ex/extract-envelope-checksum line)]
     (if (not-any? nil? [envelope checksum])
       (if (valid-envelope? envelope checksum)
         (try
 	  (let [bits (ais-util/pad
                        (payload->binary (ais-ex/extract-payload envelope)) 
-                       (ais-ex/extract-fill-bits envelope))]
-            (decode-binary-payload (ais-mappings/msg-spec (ais-types/u (subs bits 0 6))) ; type specification
-                                   (parse-tag-block acc collector line ["c" "s" "n"])    ; use metadata as base output accumulator
-                                   collector                                             ; accumulator function
-                                   (subs bits 6)))                                       ; raw binary payload
+                       (ais-ex/extract-fill-bits envelope))
+                msg-type (ais-types/u (subs bits 0 6))
+                metadata (parse-tag-block (collector acc "type" msg-type) collector line ["c" "s" "n"])]
+            (decode-binary-payload (ais-mappings/msg-spec msg-type) ; type specification
+                                   metadata                         ; use metadata as initial accumulator
+                                   collector                        ; accumulator function
+                                   (subs bits 6)))                  ; raw binary payload
           (catch Exception e
             (strace/print-stack-trace e)
 	    {"error" (str "Exception: " e)}))
