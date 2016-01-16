@@ -4,6 +4,9 @@
 
 (def aivdm-message "\\s:FooBar,c:1448312100,t:1448312099*00\\!AIVDM,1,1,,B,35NVMmg00026=kRGFbD=4a;N0UFC,0*16")
 (def aivdm-message-no-tags "!AIVDM,1,1,,B,35NVMmg00026=kRGFbD=4a;N0UFC,0*16")
+(def group-message (list "\\g:1-2-1996,c:1446625797*57\\!AIVDM,2,1,6,A,581:K8@2<lS5KL@;V20dTpN0E8T>22222222221@BPR=>6e50HT2DQ@EDlp8,0*19" "\\g:2-2-1996*5A\\!AIVDM,2,2,6,A,88888888880,2*22"))
+
+(def assembled-group "\\g:1-2-1996,c:1446625797*57\\!AIVDM,1,1,1,A,581:K8@2<lS5KL@;V20dTpN0E8T>22222222221@BPR=>6e50HT2DQ@EDlp888888888880,2*2F")
 
 (defn- parse-field [bits]
   (Integer/parseInt bits 2))
@@ -77,3 +80,7 @@
   (testing "Decode binary payload - csv"
     (let [[acc collector] (output-type-handler "csv")]
       (is (= (decode-binary-payload map-2 acc collector bin-load-2) dec-load-2)))))
+
+(deftest parse-group-test
+  (testing "Coalesce mutipart message"
+    (is (= (coalesce-group group-message) assembled-group))))

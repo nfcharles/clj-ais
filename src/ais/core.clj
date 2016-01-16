@@ -72,13 +72,6 @@
                (collector a (spec :tag) ((spec :fn) (subs b 0 block-len)))))
       a)))
 
-(defn parse-envelope [acc collector envelope]
-  (let [bits (ais-util/pad (payload->binary (ais-ex/extract-payload envelope)) (ais-ex/extract-fill-bits envelope))]
-    (decode-binary-payload (ais-mappings/msg-spec (ais-types/u (subs bits 0 6)))
-                            acc 
-    			    collector
-			    (subs bits 6))))
-
 (defn parse-tag-block [acc collector line tags]
   (loop [t tags
          a acc]
@@ -98,26 +91,35 @@
     (if (not-any? nil? [envelope checksum])
       (if (valid-envelope? envelope checksum)
         (try
-          (parse-envelope metadata collector envelope)
+	  (let [bits (ais-util/pad
+                       (payload->binary (ais-ex/extract-payload envelope)) 
+                       (ais-ex/extract-fill-bits envelope))]
+            (decode-binary-payload (ais-mappings/msg-spec (ais-types/u (subs bits 0 6))) ; type specification
+                                   (parse-tag-block acc collector line ["c" "s" "n"])    ; use metadata as base output accumulator
+                                   collector                                             ; accumulator function
+                                   (subs bits 6)))                                       ; raw binary payload
           (catch Exception e
             (strace/print-stack-trace e)
 	    {"error" (str "Exception: " e)}))
         {"error" (str "Checksum verification failed: " envelope checksum)})
       {"error" (str "Parse Error: Failed to extract envelope/checksum from message: " line)})))
 
+
 ;; ---
 ;; Multipart Core
 ;; ---
 
-(defn parse-group [msgs]
-  ;; Reassemble group message parts into complete message.
-  (let [[msg-1 msg-2] (sort-by ais-ex/extract-fragment-number msgs)
-        tag-block (ais-ex/extract-tag-block msg-1)
-        payload (reduce str (map ais-ex/extract-payload [msg-1 msg-2]))
-        fill (ais-ex/extract-fill-bits msg-2)
-        msg (str (ais-ex/extract-packet-type msg-1) ",1,1,1,A," payload "," fill)
-       ]
-    (str "\\" tag-block "\\!" msg "*" (ais-util/checksum msg))))
+(defn coalesce-group [msgs]
+  ;; Coalesce multipart message into complete message
+  (let [sorted (sort-by ais-ex/extract-fragment-number msgs)
+        first-msg (first sorted)
+        envelope (str
+                   (ais-ex/extract-packet-type first-msg)      
+                   ",1,1,1,A,"
+                   (reduce str (map ais-ex/extract-payload sorted))
+                   ","
+                   (ais-ex/extract-fill-bits (last sorted)))]
+    (str "\\" (ais-ex/extract-tag-block first-msg) "\\!" envelope "*" (ais-util/checksum envelope))))
 
 ;;---
 ;; Entrypoint

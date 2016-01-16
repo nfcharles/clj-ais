@@ -72,7 +72,7 @@
 
 (defn- parse-group [& msgs]
   (try
-    (ais-core/parse-group msgs)
+    (ais-core/coalesce-group msgs)
     (catch Exception e
       (.println *err* (str "Error parsing multipart message - " msgs ". " e))
       "failed")))
