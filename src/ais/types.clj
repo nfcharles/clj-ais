@@ -29,18 +29,18 @@
 (defn e [vocab bits]
   (vocab (u bits)))
 
-(defn t 
-  ([vocab len bits]
-    (t vocab len bits 1 []))
-  ([vocab len bits index ret]
-    (if (> len index)
-    (do
-      (recur vocab 
-             len
-             (subs bits 6)
-             (inc index)
-             (conj ret (e vocab (subs bits 0 6)))))
-      (string/replace (apply str ret) #"\s*(?:[@]*)?\s*$" ""))))
+(defn t [vocab len bits]
+  (loop [i 0
+         left (count bits)
+         b bits
+         w []]
+    (if (and (> len i) (>= left 6))
+      (recur (inc i)
+             (- left 6)
+             (subs b 6)
+             (conj w (e vocab (subs b 0 6))))
+      (string/replace (apply str w) #"\s*(?:[@]*)?\s*$" ""))))
+        
 
 (defn x [bits] bits)
 

@@ -62,12 +62,14 @@
        (apply str)))
 
 (defn decode-binary-payload [specs acc collector bits]
-  (loop [b bits
+  (loop [left (count bits)
+         b bits
          s specs
          a acc]
     (if-let [spec (first s)]
-      (let [block-len (spec :len)]
-        (recur (subs b block-len) 
+      (let [block-len (min (spec :len) left)]
+        (recur (- left block-len)
+               (subs b block-len) 
                (rest s)
                (collector a (spec :tag) ((spec :fn) (subs b 0 block-len)))))
       a)))
