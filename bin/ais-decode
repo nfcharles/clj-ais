@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+
+
+USAGE="
+Usage: ais-decode [options] INPUT MESSAGES OUTPUT-NAME
+
+Description:
+  Decodes ais sentences from input source.  At least 1 message type must be specified.
+
+  e.g.
+    ais-decode --output csv
+               --threads 3
+               /tmp/sample-input.txt
+               1,2,3,4,5
+               output
+
+  The prior command generates a file named output.csv in cwd with decoded ais sentences
+  of type 1,2,3,4,5, using 3 threads to decode the sentences.
+
+    
+Options:
+ -o, --output-type <type>   Output file type: 'csv' or 'json'
+ -t, --threads <int>        Total count of decoding threads.
+ -h, --help                 Show help.
+
+Required:
+ INPUT        Path to input file.
+ MESSAGES     Comma separated list of message types.  For example, 1,5 decodes ais message
+              types 1 and 5.
+ OUTPUT-NAME  Output filename
+"
+
+if [[ $1 == "--help" || $1 == "-h" ]]; then
+    echo -e "$USAGE"
+    exit
+fi
+
+
+# Java parameters
+JAVA_OPTS_INIT_HEAP=-Xms2048m
+JAVA_OPTS_MAX_HEAP=-Xmx4096m
+JAVA_OPTS="$JAVA_OPTS_INIT_HEAP $JAVA_OPTS_MAX_HEAP"
+RELEASE_JAR=target/uberjar/ais-0.1.0-SNAPSHOT-standalone.jar
+
+# Application parameters
+OUTPUT=json
+THREADS=1
+
+while [[ $# > 3 ]]; do
+    key="$1"
+    
+    case $key in
+	-o|--output)
+	    OUTPUT="$2"
+	    shift
+	    ;;
+	-t|--threads)
+	    THREADS="$2"
+	    shift 
+	    ;;
+	*)
+            # unknown option
+	    ;;
+    esac
+    shift 
+done
+
+# Required parameters
+INPUT=$1
+MESSAGES=$2
+OUTPUT_NAME=$3
+
+if [ -z $INPUT ]; then
+    echo "$USAGE"
+    exit 1
+fi
+
+if [ -z $MESSAGES ]; then
+    echo "$USAGE"
+    exit 1
+fi
+
+if [ -z $OUTPUT_NAME ]; then
+    echo "$USAGE"
+    exit 1
+fi
+
+echo "JAVA_OPTS=$JAVA_OPTS"
+echo "RELEASE_JAR=$RELEASE_JAR"
+echo "INPUT=$INPUT"
+echo "MESSAGES=$MESSAGES"
+echo "THREADS=$THREADS"
+echo "OUTPUT=$OUTPUT"
+echo "OUTPUT_NAME=$OUTPUT_NAME"
+
+cat $INPUT | java \
+    $JAVA_OPS \
+    -jar $RELEASE_JAR \
+    $OUTPUT_NAME \
+    $MESSAGES \
+    $THREADS \
+    $OUTPUT 2>/tmp/dropped.log

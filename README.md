@@ -23,19 +23,37 @@ Download from http://example.com/FIXME.
 
 ## Usage
 
-The library contains an entrypoint for a sample implementation decoding app
+The library contains an entrypoint for an example decoding app.  This can be invoked via `bin/ais-decode`
 
-    $ java -jar ais-0.1.0-SNAPSHOT-standalone.jar [OUTPUT-FILE] [MSG-TYPE-LIST] [N-THREADS] [OUTPUT-TYPE]
 
-## Options
+```bash
+Usage: ais-decode [options] INPUT MESSAGES OUTPUT-NAME
 
-OUTPUT-FILE:   Output filename
+Description:
+  Decodes ais sentences from input source.  At least 1 message type must be specified.
 
-MSG-TYPE-LIST: Comma separated list of message types
+  e.g.
+    bin/ais-decode --output csv
+                   --threads 3
+                   /tmp/sample-input.txt
+                   1,2,3,4,5
+                   output
 
-N-THREADS:     Number of decoding threads
+  The prior command generates a file named output.csv in cwd with decoded ais sentences
+  of type 1,2,3,4,5, using 3 threads to decode the sentences.
 
-OUTPUT-TYPE: csv | json
+    
+Options:
+ -o, --output-type <type>   Output file type: 'csv' or 'json'
+ -t, --threads <int>        Total count of decoding threads.
+ -h, --help                 Show help.
+
+Required:
+ INPUT        Path to input file.
+ MESSAGES     Comma separated list of message types.  For example, 1,5 decodes ais message
+              types 1 and 5.
+ OUTPUT-NAME  Output filename
+```
 
 ## Examples
 
