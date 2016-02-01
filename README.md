@@ -65,7 +65,7 @@ Required:
 JAVA_OPTS=-Xms2048m -Xmx4096m
 RELEASE_JAR=target/uberjar/ais-0.1.0-SNAPSHOT-standalone.jar
 INPUT=ais-messages-simple
-MESSAGE_TYPES=1,2,3,5
+MESSAGE_TYPES=1,2,3
 THREADS=1
 OUTPUT_TYPE=csv
 OUTPUT_NAME=output
