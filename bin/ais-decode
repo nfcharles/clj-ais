@@ -8,7 +8,7 @@ Description:
   Decodes ais sentences from input source.  At least 1 message type must be specified.
 
   e.g.
-    ais-decode --output csv
+    ais-decode --output-type csv
                --threads 3
                /tmp/sample-input.txt
                1,2,3,4,5
@@ -43,15 +43,15 @@ JAVA_OPTS="$JAVA_OPTS_INIT_HEAP $JAVA_OPTS_MAX_HEAP"
 RELEASE_JAR=target/uberjar/ais-0.1.0-SNAPSHOT-standalone.jar
 
 # Application parameters
-OUTPUT=json
+OUTPUT_TYPE=json
 THREADS=1
 
 while [[ $# > 3 ]]; do
     key="$1"
     
     case $key in
-	-o|--output)
-	    OUTPUT="$2"
+	-o|--output-type)
+	    OUTPUT_TYPE="$2"
 	    shift
 	    ;;
 	-t|--threads)
@@ -67,7 +67,7 @@ done
 
 # Required parameters
 INPUT=$1
-MESSAGES=$2
+MESSAGE_TYPES=$2
 OUTPUT_NAME=$3
 
 if [ -z $INPUT ]; then
@@ -75,7 +75,7 @@ if [ -z $INPUT ]; then
     exit 1
 fi
 
-if [ -z $MESSAGES ]; then
+if [ -z $MESSAGE_TYPES ]; then
     echo "$USAGE"
     exit 1
 fi
@@ -88,15 +88,13 @@ fi
 echo "JAVA_OPTS=$JAVA_OPTS"
 echo "RELEASE_JAR=$RELEASE_JAR"
 echo "INPUT=$INPUT"
-echo "MESSAGES=$MESSAGES"
+echo "MESSAGE_TYPES=$MESSAGE_TYPES"
 echo "THREADS=$THREADS"
-echo "OUTPUT=$OUTPUT"
+echo "OUTPUT_TYPE=$OUTPUT_TYPE"
 echo "OUTPUT_NAME=$OUTPUT_NAME"
 
-cat $INPUT | java \
-    $JAVA_OPS \
-    -jar $RELEASE_JAR \
+java $JAVA_OPS -jar $RELEASE_JAR \
     $OUTPUT_NAME \
-    $MESSAGES \
+    $MESSAGE_TYPES \
     $THREADS \
-    $OUTPUT 2>/tmp/dropped.log
+    $OUTPUT_TYPE < $INPUT 2>/tmp/dropped.log

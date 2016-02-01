@@ -27,32 +27,31 @@ The library contains an entrypoint for an example decoding app.  This can be inv
 
 
 ```bash
-Usage: ais-decode [options] INPUT MESSAGES OUTPUT-NAME
+Usage: ais-decode [options] INPUT MESSAGE_TYPES OUTPUT-NAME
 
 Description:
   Decodes ais sentences from input source.  At least 1 message type must be specified.
 
   e.g.
-    bin/ais-decode --output csv
+    bin/ais-decode --output-type csv
                    --threads 3
                    /tmp/sample-input.txt
-                   1,2,3,4,5
-                   output
+                   1,2,3,5
+                   decoded-messages
 
-  The prior command generates a file named output.csv in cwd with decoded ais sentences
+  The prior command generates a file named decoded-messages.csv in cwd with decoded ais sentences
   of type 1,2,3,4,5, using 3 threads to decode the sentences.
 
-    
 Options:
  -o, --output-type <type>   Output file type: 'csv' or 'json'
  -t, --threads <int>        Total count of decoding threads.
  -h, --help                 Show help.
 
 Required:
- INPUT        Path to input file.
- MESSAGES     Comma separated list of message types.  For example, 1,5 decodes ais message
-              types 1 and 5.
- OUTPUT-NAME  Output filename
+ INPUT         Path to input file.
+ MESSAGE_TYPES Comma separated list of message types.  For example, 1,5 decodes ais message
+               types 1 and 5.
+ OUTPUT-NAME   Output filename
 ```
 
 ## Examples
@@ -60,27 +59,38 @@ Required:
 ###  Decoding messages
 #### type 1, 2, 3 
 
-    $ cat ais-messages-simple | java -jar ais-0.1.0-SNAPSHOT-standalone.jar /tmp/foo 1,2,3 1 json
+    $ bin/ais-decode --output-type csv ais-messages-simple 1,2,3 output
 
 ```bash
+JAVA_OPTS=-Xms2048m -Xmx4096m
+RELEASE_JAR=target/uberjar/ais-0.1.0-SNAPSHOT-standalone.jar
+INPUT=ais-messages-simple
+MESSAGE_TYPES=1,2,3,5
+THREADS=1
+OUTPUT_TYPE=csv
+OUTPUT_NAME=output
 thread-0
-Dropping [type=12] \!AIVDM,1,1,,A,<02:oP0kKcv0@<51C5PB5@?BDPD?P:?2?EB7PDB16693P381>>5<PikP,0*37
-writing 20 messages.
-writing /tmp/foo.json
-"Elapsed time: 37.288095 msecs"
-
+writing 21 messages.
+writing output.csv
+"Elapsed time: 88.021908 msecs"
 ```
   
 #### type 5
-    $  cat ais-messages-type-5 | java -jar ais-0.1.0-SNAPSHOT-standalone.jar /tmp/foo 5 3 json 2>dropped.log
+
+    $  bin/ais-decode --output-type csv ais-messages-type-5 5 output
 
 ```bash
+JAVA_OPTS=-Xms2048m -Xmx4096m
+RELEASE_JAR=target/uberjar/ais-0.1.0-SNAPSHOT-standalone.jar
+INPUT=ais-messages-type-5
+MESSAGE_TYPES=5
+THREADS=1
+OUTPUT_TYPE=csv
+OUTPUT_NAME=output
 thread-0
-thread-1
-thread-2
-writing 213 messages.
-writing /tmp/foo.json
-"Elapsed time: 554.953214 msecs"
+writing 3 messages.
+writing output.csv
+"Elapsed time: 53.474998 msecs"
 ```
 
 ### Single sentence decoding
@@ -106,9 +116,11 @@ $ lein run -m ais.core json "\c:1448312100,t:1448312099*00\!AIVDM,1,1,,A,15RTgt0
     "second": 33, 
     "spare": "000", 
     "speed": 12.3, 
+    "station": null,
     "status": "Under way using engine", 
     "timestamp": "20151123T155500Z",
-    "turn": -720
+    "turn": -720,
+    "type": 3
 }
 ```
 
@@ -120,7 +132,10 @@ $ lein run -m ais.core csv "\c:1448312100,t:1448312099*00\!AIVDM,1,1,,A,15RTgt0P
 #### Output
 ```json
 [
+    1
     "20151123T155500Z", 
+    null,
+    null,
     0, 
     371798000, 
     "Under way using engine", 
