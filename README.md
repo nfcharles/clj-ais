@@ -40,7 +40,7 @@ Description:
                    decoded-messages
 
   The prior command generates a file named decoded-messages.csv in cwd with decoded ais sentences
-  of type 1,2,3,4,5, using 3 threads to decode the sentences.
+  of type 1,2,3,5, using 3 threads to decode the sentences.
 
 Options:
  -o, --output-type <type>   Output file type: 'csv' or 'json'
