@@ -34,26 +34,21 @@
 ;; Util
 ;; ---
 
-(defmulti output-type-handler 
-  (fn [o-type] o-type))
+(defmulti data-collector 
+  (fn [data-type] data-type))
 
-(defmethod output-type-handler "json" [_]
+(defmethod data-collector "json" [_]
   [{} #(assoc %1 %2 %3)])
 
-(defmethod output-type-handler "csv" [_]
+(defmethod data-collector "csv" [_]
   [[] #(conj %1 %3)])
 
-(defmethod output-type-handler :default [_]
-  (output-type-handler "csv"))
+(defmethod data-collector :default [_]
+  (data-collector "csv"))
 
 ;; ---
 ;; Core
 ;; ---
-
-;; TODO: Sleep, wake up, clean up organization
-
-(defn valid-envelope? [envelope cksum]
-  (= (ais-util/checksum envelope) cksum))
 
 (defn payload->binary [msg]
   (->> (seq msg)
@@ -86,11 +81,11 @@
 	         (collector a (tag-map :tag) nil))))                 ; null value, pass thru
       a)))
     
-(defn parse [output-type line]
-  (let [[acc collector] (output-type-handler output-type)
+(defn parse [data-type line]
+  (let [[acc collector] (data-collector data-type)
         [envelope checksum] (ais-ex/extract-envelope-checksum line)]
     (if (not-any? nil? [envelope checksum])
-      (if (valid-envelope? envelope checksum)
+      (if (= (ais-util/checksum envelope) checksum)
         (try
 	  (let [bits (ais-util/pad
                        (payload->binary (ais-ex/extract-payload envelope)) 
@@ -131,6 +126,6 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (let [output-type (nth args 0)
+  (let [data-type (nth args 0)
         envelope (nth args 1)]
-   (println (json/write-str (parse output-type envelope)))))
+   (println (json/write-str (parse data-type envelope)))))
