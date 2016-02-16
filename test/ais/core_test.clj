@@ -40,45 +40,45 @@
 ;; Tests
 ;; ---
 
-(deftest output-type-handler-test 
+(deftest data-collector-test 
   (testing "Output type - json"
-    (let [[acc collector] (output-type-handler "json")]
+    (let [[acc collector] (data-collector "json")]
       (is (= acc {}))
       (is (= (hash-map :foo "bar") (collector acc :foo "bar")))))
   (testing "Output type - csv"
-    (let [[acc collector] (output-type-handler "csv")]
+    (let [[acc collector] (data-collector "csv")]
       (is (= acc []))
       (is (= (list "bar") (collector acc :foo "bar"))))))
 
 (deftest parse-tag-block-test
   (testing "Parse 'c' tag - json"
-    (let [[acc collector] (output-type-handler "json")]
+    (let [[acc collector] (data-collector "json")]
       (is (= (parse-tag-block acc collector aivdm-message ["c"]) {"timestamp" "20151123T155500Z"}))))
   (testing "Parse 'c' tag - csv"
-    (let [[acc collector] (output-type-handler "csv")]
+    (let [[acc collector] (data-collector "csv")]
       (is (= (parse-tag-block acc collector aivdm-message ["c"]) ["20151123T155500Z"]))))
   (testing "Parse 'c' tag from tagless message"
-    (let [[acc collector] (output-type-handler "json")]
+    (let [[acc collector] (data-collector "json")]
       (is (= (parse-tag-block acc collector aivdm-message-no-tags ["c"]) {"timestamp" nil}))))
   (testing "Parse 'c' tag from tagless message"
-    (let [[acc collector] (output-type-handler "csv")]
+    (let [[acc collector] (data-collector "csv")]
       (is (= (parse-tag-block acc collector aivdm-message-no-tags ["c"]) [nil]))))
   (testing "Parse 's' tag - json"
-    (let [[acc collector] (output-type-handler "json")]
+    (let [[acc collector] (data-collector "json")]
       (is (= (parse-tag-block acc collector aivdm-message ["s"]) {"station" "FooBar"}))))
   (testing "Parse 's' tag from tagless message"
-    (let [[acc collector] (output-type-handler "json")]
+    (let [[acc collector] (data-collector "json")]
       (is (= (parse-tag-block acc collector aivdm-message-no-tags ["s"]) {"station" nil}))))
   (testing "Parse multiple tags - json"
-    (let [[acc collector] (output-type-handler "json")]
+    (let [[acc collector] (data-collector "json")]
       (is (= (parse-tag-block acc collector aivdm-message ["c" "s"]) {"timestamp" "20151123T155500Z" "station" "FooBar"})))))
 
 (deftest decode-binary-payload-test
   (testing "Decode binary payload - json"
-    (let [[acc collector] (output-type-handler "json")]
+    (let [[acc collector] (data-collector "json")]
       (is (= (decode-binary-payload map-1 acc collector bin-load-1) dec-load-1))))
   (testing "Decode binary payload - csv"
-    (let [[acc collector] (output-type-handler "csv")]
+    (let [[acc collector] (data-collector "csv")]
       (is (= (decode-binary-payload map-2 acc collector bin-load-2) dec-load-2)))))
 
 (deftest parse-group-test

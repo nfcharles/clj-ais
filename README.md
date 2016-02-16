@@ -14,6 +14,7 @@ clj-ais is a library for decoding ais messages.  It was designed with reference 
 | 18   | Standard Class B CS Position Report |
 | 19   | Extended Class B CS Position Report |
 | 21   | Aid-to-Navigation Report            |
+| 24   | Static Data Report                  |
 
 While the above messages are the only types supported today, clj-ais has the necessary interfaces for extending type support.  See _Extending_ for more information about extending the library.
 
@@ -205,7 +206,8 @@ Adding support for a new message type requires creating a new type specification
 
 ## TODO
 ### lib
-- Implement more message types: 24,20
+- Implement more message types: 20
+- Optionally demultiplex output stream of decoded messages into separate files in sample decoder
 
 ### testing
 - More unit tests
