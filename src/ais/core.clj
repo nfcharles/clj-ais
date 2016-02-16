@@ -35,7 +35,7 @@
 ;; ---
 
 (defmulti data-collector 
-  (fn [data-type] data-type))
+  (fn [data-format] data-format))
 
 (defmethod data-collector "json" [_]
   [{} #(assoc %1 %2 %3)])
@@ -81,8 +81,8 @@
 	         (collector a (tag-map :tag) nil))))                 ; null value, pass thru
       a)))
     
-(defn parse [data-type line]
-  (let [[acc collector] (data-collector data-type)
+(defn parse [data-format line]
+  (let [[acc collector] (data-collector data-format)
         [envelope checksum] (ais-ex/extract-envelope-checksum line)]
     (if (not-any? nil? [envelope checksum])
       (if (= (ais-util/checksum envelope) checksum)
@@ -92,10 +92,10 @@
                        (ais-ex/extract-fill-bits envelope))
                 msg-type (ais-types/u (subs bits 0 6))
                 metadata (parse-tag-block (collector acc "type" msg-type) collector line ["c" "s" "n"])]
-            (decode-binary-payload (ais-mappings/msg-spec msg-type) ; type specification
-                                   metadata                         ; use metadata as initial accumulator
-                                   collector                        ; accumulator function
-                                   (subs bits 6)))                  ; raw binary payload
+            (decode-binary-payload (ais-mappings/select-map msg-type (subs bits 6)) ; type specification
+                                   metadata                                         ; use metadata as initial accumulator
+                                   collector                                        ; accumulator function
+                                   (subs bits 6)))                                  ; raw binary payload
           (catch Exception e
             (strace/print-stack-trace e)
 	    {"error" (str "Exception: " e)}))
@@ -126,6 +126,6 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (let [data-type (nth args 0)
+  (let [data-format (nth args 0)
         envelope (nth args 1)]
-   (println (json/write-str (parse data-type envelope)))))
+   (println (json/write-str (parse data-format envelope)))))

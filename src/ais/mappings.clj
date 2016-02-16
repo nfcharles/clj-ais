@@ -169,8 +169,90 @@
   {:len  88 :desc "Name"                     :tag "name_ext"     :fn (partial ais-types/t ais-vocab/sixbit-ascii 14)}
 ))
 
+;;; ---
+;;; Type 24 message has non-trivial parsing rules
+;;; 
+;;;          message
+;;;             |
+;;;             | --> part number (0 | 1) ?
+;;;             |
+;;;           /   \   
+;;;       0  /     \  1
+;;;         /       \
+;;;       24-a    24-b-*
+;;;                 |
+;;;                 | --> auxilary vessel ?
+;;;                 |
+;;;               /   \
+;;;        yes   /     \    no
+;;;             /       \
+;;;          24-b-1   24-b-2
+;;; ---
+;;;
+;;; 24-b-* determines the interpreation of the penultimate block, the last 30 bits before the spare bits block.
+;;; ---
+;;; 24-b-1
+;;;   * The 30 bits are interpreted as the mmsi of the auxilary vessel's mother vessel
+;;;
+;;; 24-b-2
+;;;   * The 30 bits are interpreted as dimensions of the vessel
+ 
+(def mapping-24-a (list
+  {:len   2 :desc "Repeat Indicator"       :tag "repeat"       :fn ais-types/u}
+  {:len  30 :desc "MMSI"                   :tag "mmsi"         :fn ais-types/u}
+  {:len   2 :desc "Part Number"            :tag "partno"       :fn ais-types/u}
+  {:len 120 :desc "Vessel Name"            :tag "shipname"     :fn (partial ais-types/t ais-vocab/sixbit-ascii 20)}
+  {:len   8 :desc "Spare"                  :tag "spare"        :fn ais-types/x}
+))
+
+;; last 30 bits before spare are interpreted as vessel dimensions
+(def mapping-24-b-dim (list
+  {:len   2 :desc "Repeat Indicator"       :tag "repeat"          :fn ais-types/u}
+  {:len  30 :desc "MMSI"                   :tag "mmsi"            :fn ais-types/u}
+  {:len   2 :desc "Part Number"            :tag "partno"          :fn ais-types/u}
+  {:len   8 :desc "Ship Type"              :tag "shiptype"        :fn (partial ais-types/e ais-vocab/ship-type)}
+  {:len  18 :desc "Vendor ID"              :tag "vendorid"        :fn (partial ais-types/t ais-vocab/sixbit-ascii 3)}
+  {:len   4 :desc "Unit Model Code"        :tag "model"           :fn ais-types/u}
+  {:len  20 :desc "Serial Number"          :tag "serial"          :fn ais-types/u}
+  {:len  42 :desc "Call Sign"              :tag "callsign"        :fn (partial ais-types/t ais-vocab/sixbit-ascii 7)}
+  {:len   9 :desc "Dimension to Bow"       :tag "to_bow"          :fn ais-types/u}
+  {:len   9 :desc "Dimension to Stern"     :tag "to_stern"        :fn ais-types/u}
+  {:len   6 :desc "Dimension to Port"      :tag "to_port"         :fn ais-types/u}
+  {:len   6 :desc "Dimension to Starboard" :tag "to_starboard"    :fn ais-types/u}  
+  {:len   6 :desc "Spare"                  :tag "spare"           :fn ais-types/x}
+))
+
+;; last 30 bits before spare are interpreted as vessel parent mmsi
+(def mapping-24-b-mmsi (list
+  {:len   2 :desc "Repeat Indicator"       :tag "repeat"          :fn ais-types/u}
+  {:len  30 :desc "MMSI"                   :tag "mmsi"            :fn ais-types/u}
+  {:len   2 :desc "Part Number"            :tag "partno"          :fn ais-types/u}
+  {:len   8 :desc "Ship Type"              :tag "shiptype"        :fn (partial ais-types/e ais-vocab/ship-type)}
+  {:len  18 :desc "Vendor ID"              :tag "vendorid"        :fn (partial ais-types/t ais-vocab/sixbit-ascii 3)}
+  {:len   4 :desc "Unit Model Code"        :tag "model"           :fn ais-types/u}
+  {:len  20 :desc "Serial Number"          :tag "serial"          :fn ais-types/u}
+  {:len  42 :desc "Call Sign"              :tag "callsign"        :fn (partial ais-types/t ais-vocab/sixbit-ascii 7)}
+  {:len  30 :desc "Mothership MMSI"        :tag "mothership_mmsi" :fn ais-types/u}
+  {:len   6 :desc "Spare"                  :tag "spare"           :fn ais-types/x}
+))
+
+(defn- determine-b-map [bits]
+  (let [mmsi-prefix (Math/floor (/ (ais-types/u (subs bits 2 32)) 10000000))]
+    (if (= 98.0 mmsi-prefix) ; if auxilary mmsi signature, use b-mmsi spec otherwise b-dim spec
+      mapping-24-b-mmsi
+      mapping-24-b-dim)))
+      
+(defn- determine-map [bits]
+  (let [part-no (ais-types/u (subs bits 32 34))]
+    (case part-no
+      0 mapping-24-a
+      1 (determine-b-map bits)
+      nil)))
 
 
+;; ---
+;; Map selection functions
+;; --
 
 (def msg-spec {
   1 base-mapping
@@ -182,3 +264,14 @@
  19 mapping-19
  21 mapping-21
 })
+
+(defmulti select-map 
+  (fn [msg-type bits] msg-type))
+
+(defmethod select-map 24 [_ bits]
+  (determine-map bits))
+
+;; TODO: Maybe more efficient to have method for each defined type rather
+;; than defaulting to default case.  ???
+(defmethod select-map :default [msg-type bits]
+  (msg-spec msg-type))
