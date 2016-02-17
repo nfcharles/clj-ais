@@ -6,6 +6,7 @@
   (:require [ais.extractors :as ais-ex])
   (:gen-class))
 
+(defn- const [c & _] c)
 
 (def tag-block (hash-map
   "c" { :desc "Timestamp" 
@@ -25,6 +26,7 @@
   (let [factor (if (< x 0) -1 1)]
     (int (* factor (* x x)))))
 
+
 (def base-mapping (list
   {:len  2 :desc "Repeat Indicator"         :tag "repeat"   :fn ais-types/u}
   {:len 30 :desc "MMSI"                     :tag "mmsi"     :fn ais-types/u}
@@ -43,7 +45,17 @@
   {:len 19 :desc "Radio status"             :tag "radio"    :fn ais-types/u}
 ))
 
+(def mapping-1 
+  (cons {:len 6 :desc "Message Type" :tag "type" :fn (partial const 1)} base-mapping)) 
+
+(def mapping-2
+  (cons {:len 6 :desc "Message Type" :tag "type" :fn (partial const 2)} base-mapping)) 
+
+(def mapping-3 
+  (cons {:len 6 :desc "Message Type" :tag "type" :fn (partial const 3)} base-mapping)) 
+
 (def mapping-4 (list
+  {:len  6 :desc "Message Type"           :tag "type"     :fn (partial const 4)}
   {:len  2 :desc "Repeat Indicator"       :tag "repeat"   :fn ais-types/u}
   {:len 30 :desc "MMSI"                   :tag "mmsi"     :fn ais-types/u}
   {:len 14 :desc "Year (UTC)"             :tag "year"     :fn ais-types/u}
@@ -62,6 +74,7 @@
 ))
 
 (def mapping-5 (list
+  {:len   6 :desc "Message Type"           :tag "type"         :fn (partial const 5)}
   {:len   2 :desc "Repeat Indicator"       :tag "repeat"       :fn ais-types/u}
   {:len  30 :desc "MMSI"                   :tag "mmsi"         :fn ais-types/u}
   {:len   2 :desc "AIS Version"            :tag "ais_version"  :fn ais-types/u}
@@ -86,6 +99,7 @@
 
 ;; up to 5 AIVDM sentance payloads
 (def mapping-6 (list 
+  {:len   6 :desc "Message Type"           :tag "type"       :fn (partial const 6)}
   {:len   2 :desc "Repeat Indicator"       :tag "repeat"     :fn ais-types/u}
   {:len  30 :desc "SourceMMSI"             :tag "mmsi"       :fn ais-types/u}
   {:len   2 :desc "Sequence Number"        :tag "seqno"      :fn ais-types/u}
@@ -99,6 +113,7 @@
 
 
 (def mapping-18 (list
+  {:len  6 :desc "Message Type"             :tag "type"     :fn (partial const 18)}
   {:len  2 :desc "Repeat Indicator"         :tag "repeat"   :fn ais-types/u}
   {:len 30 :desc "MMSI"                     :tag "mmsi"     :fn ais-types/u}
   {:len  8 :desc "Regional Reserved"        :tag "reserved" :fn ais-types/x}
@@ -122,6 +137,7 @@
 
 
 (def mapping-19 (list
+  {:len   6 :desc "Message Type"             :tag "type"         :fn (partial const 19)}
   {:len   2 :desc "Repeat Indicator"         :tag "repeat"       :fn ais-types/u}
   {:len  30 :desc "MMSI"                     :tag "mmsi"         :fn ais-types/u}
   {:len   8 :desc "Regional Reserved"        :tag "reserved"     :fn ais-types/x}
@@ -147,6 +163,7 @@
 ))
 
 (def mapping-21 (list
+  {:len   6 :desc "Message Type"             :tag "type"         :fn (partial const 21)}
   {:len   2 :desc "Repeat Indicator"         :tag "repeat"       :fn ais-types/u}
   {:len  30 :desc "MMSI"                     :tag "mmsi"         :fn ais-types/u}
   {:len   5 :desc "Aid type"                 :tag "aid_type"     :fn (partial ais-types/e ais-vocab/nav-aid-type)}
@@ -198,6 +215,7 @@
 ;;;   * The 30 bits are interpreted as dimensions of the vessel
  
 (def mapping-24-a (list
+  {:len   6 :desc "Message Type"           :tag "type"         :fn (partial const 24)}
   {:len   2 :desc "Repeat Indicator"       :tag "repeat"       :fn ais-types/u}
   {:len  30 :desc "MMSI"                   :tag "mmsi"         :fn ais-types/u}
   {:len   2 :desc "Part Number"            :tag "partno"       :fn ais-types/u}
@@ -207,6 +225,7 @@
 
 ;; last 30 bits before spare are interpreted as vessel dimensions
 (def mapping-24-b-dim (list
+  {:len   6 :desc "Message Type"           :tag "type"            :fn (partial const 24)}
   {:len   2 :desc "Repeat Indicator"       :tag "repeat"          :fn ais-types/u}
   {:len  30 :desc "MMSI"                   :tag "mmsi"            :fn ais-types/u}
   {:len   2 :desc "Part Number"            :tag "partno"          :fn ais-types/u}
@@ -224,6 +243,7 @@
 
 ;; last 30 bits before spare are interpreted as vessel parent mmsi
 (def mapping-24-b-mmsi (list
+  {:len   6 :desc "Message Type"           :tag "type"            :fn (partial const 24)}
   {:len   2 :desc "Repeat Indicator"       :tag "repeat"          :fn ais-types/u}
   {:len  30 :desc "MMSI"                   :tag "mmsi"            :fn ais-types/u}
   {:len   2 :desc "Part Number"            :tag "partno"          :fn ais-types/u}
@@ -236,42 +256,35 @@
   {:len   6 :desc "Spare"                  :tag "spare"           :fn ais-types/x}
 ))
 
-(defn- determine-b-map [bits]
+(defn- determine-24-b-map [bits]
   (let [mmsi-prefix (Math/floor (/ (ais-types/u (subs bits 2 32)) 10000000))]
-    (if (= 98.0 mmsi-prefix) ; if auxilary mmsi signature, use b-mmsi spec otherwise b-dim spec
+    (if (= 98.0 mmsi-prefix) ; check for auxilary mmsi signature (98XXXXXXX)
       mapping-24-b-mmsi
       mapping-24-b-dim)))
       
-(defn- determine-map [bits]
+(defn- determine-24-map [bits]
   (let [part-no (ais-types/u (subs bits 32 34))]
     (case part-no
       0 mapping-24-a
-      1 (determine-b-map bits)
+      1 (determine-24-b-map bits)
       nil)))
-
 
 ;; ---
 ;; Map selection functions
 ;; --
 
-(def msg-spec {
-  1 base-mapping
-  2 base-mapping
-  3 base-mapping
-  4 mapping-4
-  5 mapping-5
- 18 mapping-18
- 19 mapping-19
- 21 mapping-21
-})
+(defn- get-type [bits]
+  (ais-types/u (subs bits 0 6)))
 
-(defmulti select-map 
-  (fn [msg-type bits] msg-type))
+(defmulti parsing-rules 
+  (fn [bits] (get-type bits)))
 
-(defmethod select-map 24 [_ bits]
-  (determine-map bits))
-
-;; TODO: Maybe more efficient to have method for each defined type rather
-;; than defaulting to default case.  ???
-(defmethod select-map :default [msg-type bits]
-  (msg-spec msg-type))
+(defmethod parsing-rules  1 [bits] mapping-1)
+(defmethod parsing-rules  2 [bits] mapping-2)
+(defmethod parsing-rules  3 [bits] mapping-3)
+(defmethod parsing-rules  4 [bits] mapping-4)
+(defmethod parsing-rules  5 [bits] mapping-5)
+(defmethod parsing-rules 18 [bits] mapping-18)
+(defmethod parsing-rules 19 [bits] mapping-19)
+(defmethod parsing-rules 21 [bits] mapping-21)
+(defmethod parsing-rules 24 [bits] (determine-24-map bits))

@@ -66,7 +66,9 @@
         (recur (- left block-len)
                (subs b block-len) 
                (rest s)
-               (collector a (spec :tag) ((spec :fn) (subs b 0 block-len)))))
+               (collector a 
+	       		  (spec :tag) 
+			  ((spec :fn) (subs b 0 block-len)))))
       a)))
 
 (defn parse-tag-block [acc collector line tags]
@@ -89,13 +91,11 @@
         (try
 	  (let [bits (ais-util/pad
                        (payload->binary (ais-ex/extract-payload envelope)) 
-                       (ais-ex/extract-fill-bits envelope))
-                msg-type (ais-types/u (subs bits 0 6))
-                metadata (parse-tag-block (collector acc "type" msg-type) collector line ["c" "s" "n"])]
-            (decode-binary-payload (ais-mappings/select-map msg-type (subs bits 6)) ; type specification
-                                   metadata                                         ; use metadata as initial accumulator
-                                   collector                                        ; accumulator function
-                                   (subs bits 6)))                                  ; raw binary payload
+                       (ais-ex/extract-fill-bits envelope))]
+            (decode-binary-payload (ais-mappings/parsing-rules bits)                  ; type specification
+                                   (parse-tag-block acc collector line ["c" "s" "n"]) ; use metadata as initial accumulator
+                                   collector                                          ; accumulator function
+                                   bits))                                             ; raw binary payload
           (catch Exception e
             (strace/print-stack-trace e)
 	    {"error" (str "Exception: " e)}))
