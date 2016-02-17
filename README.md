@@ -28,7 +28,7 @@ The library contains an entrypoint for an example decoding app.  This can be inv
 
 
 ```bash
-Usage: ais-decode [options] INPUT MESSAGE_TYPES OUTPUT-NAME
+Usage: ais-decode [options] INPUT MESSAGE-TYPES OUTPUT-NAME
 
 Description:
   Decodes ais sentences from input source.  At least 1 message type must be specified.
@@ -44,13 +44,13 @@ Description:
   of type 1,2,3,5, using 3 threads to decode the sentences.
 
 Options:
- -o, --output-format <format>   Output file type: 'csv' or 'json'
+ -o, --output-format <format>   Output file format: 'csv' or 'json'
  -t, --threads <int>            Total count of decoding threads.
  -h, --help                     Show help.
 
 Required:
  INPUT         Path to input file.
- MESSAGE_TYPES Comma separated list of message types.  For example, 1,5 decodes ais message
+ MESSAGE-TYPES Comma separated list of message types.  For example, 1,5 decodes ais message
                types 1 and 5.
  OUTPUT-NAME   Output filename
 ```
