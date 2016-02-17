@@ -14,6 +14,7 @@ clj-ais is a library for decoding ais messages.  It was designed with reference 
 | 18   | Standard Class B CS Position Report |
 | 19   | Extended Class B CS Position Report |
 | 21   | Aid-to-Navigation Report            |
+| 24   | Static Data Report                  |
 
 While the above messages are the only types supported today, clj-ais has the necessary interfaces for extending type support.  See _Extending_ for more information about extending the library.
 
@@ -33,7 +34,7 @@ Description:
   Decodes ais sentences from input source.  At least 1 message type must be specified.
 
   e.g.
-    bin/ais-decode --output-type csv
+    bin/ais-decode --output-format csv
                    --threads 3
                    /tmp/sample-input.txt
                    1,2,3,5
@@ -43,9 +44,9 @@ Description:
   of type 1,2,3,5, using 3 threads to decode the sentences.
 
 Options:
- -o, --output-type <type>   Output file type: 'csv' or 'json'
- -t, --threads <int>        Total count of decoding threads.
- -h, --help                 Show help.
+ -o, --output-format <format>   Output file type: 'csv' or 'json'
+ -t, --threads <int>            Total count of decoding threads.
+ -h, --help                     Show help.
 
 Required:
  INPUT         Path to input file.
@@ -59,7 +60,7 @@ Required:
 ###  Decoding messages
 #### type 1, 2, 3 
 
-    $ bin/ais-decode --output-type csv ais-messages-simple 1,2,3 output
+    $ bin/ais-decode --output-format csv ais-messages-simple 1,2,3 output
 
 ```bash
 JAVA_OPTS=-Xms2048m -Xmx4096m
@@ -67,7 +68,7 @@ RELEASE_JAR=target/uberjar/ais-0.1.0-SNAPSHOT-standalone.jar
 INPUT=ais-messages-simple
 MESSAGE_TYPES=1,2,3
 THREADS=1
-OUTPUT_TYPE=csv
+OUTPUT_FORMAT=csv
 OUTPUT_NAME=output
 thread-0
 writing 21 messages.
@@ -77,7 +78,7 @@ writing output.csv
   
 #### type 5
 
-    $  bin/ais-decode --output-type csv ais-messages-type-5 5 output
+    $  bin/ais-decode --output-format csv ais-messages-type-5 5 output
 
 ```bash
 JAVA_OPTS=-Xms2048m -Xmx4096m
@@ -85,7 +86,7 @@ RELEASE_JAR=target/uberjar/ais-0.1.0-SNAPSHOT-standalone.jar
 INPUT=ais-messages-type-5
 MESSAGE_TYPES=5
 THREADS=1
-OUTPUT_TYPE=csv
+OUTPUT_FORMAT=csv
 OUTPUT_NAME=output
 thread-0
 writing 3 messages.
@@ -205,7 +206,8 @@ Adding support for a new message type requires creating a new type specification
 
 ## TODO
 ### lib
-- Implement more message types: 24,20
+- Implement more message types: 20
+- Optionally demultiplex output stream of decoded messages into separate files in sample decoder
 
 ### testing
 - More unit tests

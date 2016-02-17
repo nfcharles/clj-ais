@@ -8,7 +8,7 @@ Description:
   Decodes ais sentences from input source.  At least 1 message type must be specified.
 
   e.g.
-    ais-decode --output-type csv
+    ais-decode --output-format csv
                --threads 3
                /tmp/sample-input.txt
                1,2,3,4,5
@@ -19,9 +19,9 @@ Description:
 
     
 Options:
- -o, --output-type <type>   Output file type: 'csv' or 'json'
- -t, --threads <int>        Total count of decoding threads.
- -h, --help                 Show help.
+ -o, --output-format <format> Output file type: 'csv' or 'json'
+ -t, --threads <int>          Total count of decoding threads.
+ -h, --help                   Show help.
 
 Required:
  INPUT        Path to input file.
@@ -37,21 +37,22 @@ fi
 
 
 # Java parameters
+BUILD_VERSION=0.2.0
 JAVA_OPTS_INIT_HEAP=-Xms2048m
 JAVA_OPTS_MAX_HEAP=-Xmx4096m
 JAVA_OPTS="$JAVA_OPTS_INIT_HEAP $JAVA_OPTS_MAX_HEAP"
-RELEASE_JAR=target/uberjar/ais-0.1.0-SNAPSHOT-standalone.jar
+RELEASE_JAR=target/uberjar/ais-$BUILD_VERSION-SNAPSHOT-standalone.jar
 
 # Application parameters
-OUTPUT_TYPE=json
+OUTPUT_FORMAT=json
 THREADS=1
 
 while [[ $# > 3 ]]; do
     key="$1"
     
     case $key in
-	-o|--output-type)
-	    OUTPUT_TYPE="$2"
+	-o|--output-format)
+	    OUTPUT_FORMAT="$2"
 	    shift
 	    ;;
 	-t|--threads)
@@ -90,11 +91,11 @@ echo "RELEASE_JAR=$RELEASE_JAR"
 echo "INPUT=$INPUT"
 echo "MESSAGE_TYPES=$MESSAGE_TYPES"
 echo "THREADS=$THREADS"
-echo "OUTPUT_TYPE=$OUTPUT_TYPE"
+echo "OUTPUT_FORMAT=$OUTPUT_FORMAT"
 echo "OUTPUT_NAME=$OUTPUT_NAME"
 
 java $JAVA_OPS -jar $RELEASE_JAR \
     $OUTPUT_NAME \
     $MESSAGE_TYPES \
     $THREADS \
-    $OUTPUT_TYPE < $INPUT 2>/tmp/dropped.log
+    $OUTPUT_FORMAT < $INPUT 2>/tmp/dropped.log
