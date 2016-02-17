@@ -9,12 +9,18 @@
   (:require [clojure.pprint :as pprint])
   (:gen-class))
 
-;   ____                        _        ____                     _           
-;  / ___|  __ _ _ __ ___  _ __ | | ___  |  _ \  ___  ___ ___   __| | ___ _ __ 
-;  \___ \ / _` | '_ ` _ \| '_ \| |/ _ \ | | | |/ _ \/ __/ _ \ / _` |/ _ \ '__|
-;   ___) | (_| | | | | | | |_) | |  __/ | |_| |  __/ (_| (_) | (_| |  __/ |   
-;  |____/ \__,_|_| |_| |_| .__/|_|\___| |____/ \___|\___\___/ \__,_|\___|_|   
-;                        |_|                                                  
+;;;   ____                        _        ____                     _           
+;;;  / ___|  __ _ _ __ ___  _ __ | | ___  |  _ \  ___  ___ ___   __| | ___ _ __ 
+;;;  \___ \ / _` | '_ ` _ \| '_ \| |/ _ \ | | | |/ _ \/ __/ _ \ / _` |/ _ \ '__|
+;;;   ___) | (_| | | | | | | |_) | |  __/ | |_| |  __/ (_| (_) | (_| |  __/ |   
+;;;  |____/ \__,_|_| |_| |_| .__/|_|\___| |____/ \___|\___\___/ \__,_|\___|_|   
+;;;                        |_|                                                  
+
+;;; The following application uses ais-lib's core functionality to implement an ais decoding application.  
+;;; There are simplifying assumptions as the primary goal is to illustrate a basic sample implementation
+;;; of the library.
+;;;   
+;;; Multipart messages are assumed to flow in direct sequential, chronological order.      
 
 
 (def buffer-size 1000)
@@ -26,8 +32,7 @@
 ;; ---
 
 (defmulti write-data 
-  (fn [output-type & _] 
-    output-type))
+  (fn [format & _] format))
 
 (defmethod write-data "json" [_ writer data ]
   (.write writer (json/write-str data)))
@@ -38,11 +43,11 @@
 (defmethod write-data :default [_ writer data]
   (write-data "csv" writer data))
 
-(defn- write [name output-type lines]
-  (let [filename (str  name "." output-type)]
+(defn- write [name format lines]
+  (let [filename (str  name "." format)]
     (println (str "writing " filename))
-    (with-open [w (clojure.java.io/writer filename)]
-      (write-data output-type w lines))))
+    (with-open [writer (clojure.java.io/writer filename)]
+      (write-data format writer lines))))
 
 ;;---
 ;; Util
@@ -57,16 +62,14 @@
 (defn- extract-type [msg]
   (ais-util/char-str->decimal (subs (ais-ex/extract-payload msg) 0 1)))
 
-(defn- fragment-count [msg]
-  (ais-ex/extract-fragment-count msg))
 
 ;;---
 ;; Core
 ;;---
 
-(defn- decode [output-type msg]
+(defn- decode [format msg]
   (try
-    (ais-core/parse output-type msg)
+    (ais-core/parse format msg)
     (catch Exception e
       (.println *err* (str "Error decoding - " msg ". " e))))) 
 
@@ -90,7 +93,8 @@
                 (if (and (types msg-type) (= frag-num 1))
 	          (condp = frag-count
 	            1 (async/>!! out-ch line)
-		    ;; Assumption: Group values stream in sequential order
+		    ;; We assume group values stream in sequential order hence sequential 
+		    ;; reads from the input channel
 	    	    2 (async/>!! out-ch (parse-group line (async/<!! in-ch)))
 	     	    (.println *err* (str "Unexpected fragment count: " frag-count ". " line)))
 		  (.println *err* (str "Dropping [type=" msg-type "] " line)))))
@@ -98,14 +102,14 @@
            (async/close! out-ch))))
     out-ch))
 
-(defn- process [output-type n in-ch]
+(defn- process [format n in-ch]
   (let [out-ch (async/chan buffer-size)]
     (dotimes [i n]
       (println (str "thread-" i))
       (async/thread
         (loop []
           (when-let [line (async/<!! in-ch)]
-	    (async/>!! out-ch (decode output-type line))
+	    (async/>!! out-ch (decode format line))
 	    (recur)))
         (async/close! out-ch)))
     out-ch))
@@ -119,12 +123,12 @@
           (async/>!! out-ch msgs))))
     out-ch))
 
-(defn run [in-ch output-filename types nthreads output-type]
+(defn run [in-ch output-filename types nthreads format]
   (let [filtered (split-stream in-ch types)
-       	processed (process output-type nthreads filtered)
+       	processed (process format nthreads filtered)
         msgs (async/<!! (collect processed))]
     (println (str "writing " (count msgs) " messages."))
-    (write output-filename output-type msgs)))
+    (write output-filename format msgs)))
 
 (def stdin-reader
   (java.io.BufferedReader. *in*))
@@ -134,6 +138,6 @@
   (let [output-filename (nth args 0)
         types (handled-types (parse-types (nth args 1)))
         nthreads (Integer. (nth args 2))
-	output-type (nth args 3)
+	format (nth args 3)
         stream (async/to-chan (line-seq stdin-reader))]
-    (time (run stream output-filename types nthreads output-type))))
+    (time (run stream output-filename types nthreads format))))
