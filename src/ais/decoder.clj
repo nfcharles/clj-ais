@@ -7,6 +7,7 @@
   (:require [clojure.data.json :as json])
   (:require [clojure.data.csv :as csv])
   (:require [clojure.pprint :as pprint])
+  (:require [clojure.stacktrace :as strace])
   (:gen-class))
 
 ;;;   ____                        _        ____                     _           
@@ -71,14 +72,15 @@
   (try
     (ais-core/parse format msg)
     (catch Exception e
-      (.println *err* (str "Error decoding - " msg ". " e))))) 
+      (strace/print-stack-trace e)
+      "DECODE-FAILED")))
 
 (defn- parse-group [& msgs]
   (try
     (ais-core/coalesce-group msgs)
     (catch Exception e
-      (.println *err* (str "Error parsing multipart message - " msgs ". " e))
-      "failed")))
+      (strace/print-stack-trace e)
+      "COALESCE-FAILED")))
       
 (defn- split-stream [in-ch types]
   (let [out-ch (async/chan buffer-size)]

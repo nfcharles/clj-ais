@@ -4,7 +4,6 @@
   (:require [ais.mappings  :as ais-mappings])
   (:require [ais.types :as ais-types])
   (:require [ais.util :as ais-util])
-  (:require [clojure.stacktrace :as strace])
   (:gen-class))
 
 ;       _  _             _     
@@ -67,8 +66,8 @@
                (subs b block-len) 
                (rest s)
                (collector a 
-	       		  (spec :tag) 
-			  ((spec :fn) (subs b 0 block-len)))))
+                          (spec :tag) 
+                          ((spec :fn) (subs b 0 block-len)))))
       a)))
 
 (defn parse-tag-block [acc collector line tags]
@@ -83,25 +82,24 @@
 	         (collector a (tag-map :tag) nil))))                 ; null value, pass thru
       a)))
     
+
+(defn- preprocess-bitfields [envelope]
+  (ais-util/pad 
+   (payload->binary (ais-ex/extract-payload envelope)) 
+   (ais-ex/extract-fill-bits envelope)))
+
 (defn parse [data-format line]
   (let [[acc collector] (data-collector data-format)
         [envelope checksum] (ais-ex/extract-envelope-checksum line)]
     (if (not-any? nil? [envelope checksum])
       (if (= (ais-util/checksum envelope) checksum)
-        (try
-	  (let [bits (ais-util/pad
-                       (payload->binary (ais-ex/extract-payload envelope)) 
-                       (ais-ex/extract-fill-bits envelope))]
-            (decode-binary-payload (ais-mappings/parsing-rules bits)                  ; type specification
-                                   (parse-tag-block acc collector line ["c" "s" "n"]) ; use metadata as initial accumulator
-                                   collector                                          ; accumulator function
-                                   bits))                                             ; raw binary payload
-          (catch Exception e
-            (strace/print-stack-trace e)
-	    {"error" (str "Exception: " e)}))
-        {"error" (str "Checksum verification failed: " envelope checksum)})
-      {"error" (str "Parse Error: Failed to extract envelope/checksum from message: " line)})))
-
+        (let [bits (preprocess-bitfields envelope)]
+          (decode-binary-payload (ais-mappings/parsing-rules bits)                  ; type specification
+                                 (parse-tag-block acc collector line ["c" "s" "n"]) ; use metadata as initial accumulator
+                                 collector                                          ; accumulator function
+                                 bits))                                             ; raw binary payload
+        (throw (Exception. (str "ChecksumVerificationException: chksum(" envelope ") != " checksum))))
+      (throw (Exception. (str "MessageSyntaxException: failed to extract (envelope, checksum) from message."))))))
 
 ;; ---
 ;; Multipart Core
