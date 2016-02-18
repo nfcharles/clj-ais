@@ -162,6 +162,29 @@
   {:len   4 :desc "Spare"                    :tag "spare"        :fn ais-types/x}
 ))
 
+(def mapping-20 (list
+  {:len   6 :desc "Message Type"      :tag "type"         :fn (partial const 20)}
+  {:len   2 :desc "Repeat Indicator"  :tag "repeat"       :fn ais-types/u}
+  {:len  30 :desc "MMSI"              :tag "mmsi"         :fn ais-types/u}
+  {:len   2 :desc "Spare"             :tag "spare"        :fn ais-types/x}
+  {:len  12 :desc "Offset number 1"   :tag "offset1"      :fn ais-types/u}
+  {:len   4 :desc "Reserved slots"    :tag "number1"      :fn ais-types/u}
+  {:len   3 :desc "Time-out"          :tag "timeout1"     :fn ais-types/u}
+  {:len  11 :desc "Increment"         :tag "increment1"   :fn ais-types/u}
+  {:len  12 :desc "Offset number 2"   :tag "offset2"      :fn ais-types/u}
+  {:len   4 :desc "Reserved slots"    :tag "number2"      :fn ais-types/u}
+  {:len   3 :desc "Time-out"          :tag "timeout2"     :fn ais-types/u}
+  {:len  11 :desc "Increment"         :tag "increment2"   :fn ais-types/u}
+  {:len  12 :desc "Offset number 3"   :tag "offset3"      :fn ais-types/u}
+  {:len   4 :desc "Reserved slots"    :tag "number3"      :fn ais-types/u}
+  {:len   3 :desc "Time-out"          :tag "timeout3"     :fn ais-types/u}
+  {:len  11 :desc "Increment"         :tag "increment3"   :fn ais-types/u}
+  {:len  12 :desc "Offset number 4"   :tag "offset4"      :fn ais-types/u}
+  {:len   4 :desc "Reserved slots"    :tag "number4"      :fn ais-types/u}
+  {:len   3 :desc "Time-out"          :tag "timeout4"     :fn ais-types/u}
+  {:len  11 :desc "Increment"         :tag "increment4"   :fn ais-types/u}
+))
+
 (def mapping-21 (list
   {:len   6 :desc "Message Type"             :tag "type"         :fn (partial const 21)}
   {:len   2 :desc "Repeat Indicator"         :tag "repeat"       :fn ais-types/u}
@@ -286,5 +309,6 @@
 (defmethod parsing-rules  5 [bits] mapping-5)
 (defmethod parsing-rules 18 [bits] mapping-18)
 (defmethod parsing-rules 19 [bits] mapping-19)
+(defmethod parsing-rules 20 [bits] mapping-20)
 (defmethod parsing-rules 21 [bits] mapping-21)
 (defmethod parsing-rules 24 [bits] (determine-24-map bits))
