@@ -19,7 +19,7 @@ Description:
 
     
 Options:
- -o, --output-format <format> Output file type: 'csv' or 'json'
+ -o, --output-format <format> Output file format: 'csv' or 'json'
  -t, --threads <int>          Total count of decoding threads.
  -h, --help                   Show help.
 
@@ -37,7 +37,7 @@ fi
 
 
 # Java parameters
-BUILD_VERSION=0.2.0
+BUILD_VERSION=0.3.1
 JAVA_OPTS_INIT_HEAP=-Xms2048m
 JAVA_OPTS_MAX_HEAP=-Xmx4096m
 JAVA_OPTS="$JAVA_OPTS_INIT_HEAP $JAVA_OPTS_MAX_HEAP"
