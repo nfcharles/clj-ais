@@ -21,7 +21,14 @@ While the above messages are the only types supported today, clj-ais has the nec
 
 ## Installation
 
-Download from http://example.com/FIXME.
+clj-ais is not available in public clojure repos yet.  Fork repo and build.
+
+```bash
+$ cd /path/to/clj-ais
+$ lein ubjarbar
+```
+
+The library jars are built in ```clj-ais/target/uberjar/```.
 
 ## Usage
 
@@ -224,7 +231,7 @@ Adding support for a new message type requires creating a new type specification
 
 ## License
 
-Copyright © 2015 FIXME
+Copyright © 2015 Navil Charles
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
