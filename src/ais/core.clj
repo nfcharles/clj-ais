@@ -99,7 +99,7 @@
                                  collector                                          ; accumulator function
                                  bits))                                             ; raw binary payload
         (throw (Exception. (str "ChecksumVerificationException: chksum(" envelope ") != " checksum))))
-      (throw (Exception. (str "MessageSyntaxException: failed to extract (envelope, checksum) from message."))))))
+      (throw (Exception. (str "MessageSyntaxException: failed to extract (env, chksum) from message: " line))))))
 
 ;; ---
 ;; Multipart Core

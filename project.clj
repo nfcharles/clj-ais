@@ -1,4 +1,4 @@
-(defproject ais "0.3.1-SNAPSHOT"
+(defproject ais "0.4.0-SNAPSHOT"
   :description "AIS (Automatic Identification System) decoding library"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
