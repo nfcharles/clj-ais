@@ -95,13 +95,13 @@
                 (if (and (types msg-type) (= frag-num 1))
 	          (condp = frag-count
 	            1 (async/>!! out-ch line)
-		    ;; We assume group values stream in sequential order hence sequential 
-		    ;; reads from the input channel
-	    	    2 (async/>!! out-ch (parse-group line (async/<!! in-ch)))
+	            ;; We assume group values stream in sequential order hence sequential 
+	            ;; reads from the input channel
+	            2 (async/>!! out-ch (parse-group line (async/<!! in-ch)))
 	     	    (.println *err* (str "Unexpected fragment count: " frag-count ". " line)))
-		  (.println *err* (str "Dropping [type=" msg-type "] " line)))))
-             (recur))
-           (async/close! out-ch))))
+	          (.println *err* (str "Dropping [type=" msg-type "] " line)))))
+            (recur))
+          (async/close! out-ch))))
     out-ch))
 
 (defn- process [format n in-ch]
