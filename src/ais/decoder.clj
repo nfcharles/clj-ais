@@ -95,34 +95,37 @@
                 (if (and (types msg-type) (= frag-num 1))
 	          (condp = frag-count
 	            1 (async/>!! out-ch line)
-		    ;; We assume group values stream in sequential order hence sequential 
-		    ;; reads from the input channel
-	    	    2 (async/>!! out-ch (parse-group line (async/<!! in-ch)))
+	            ;; We assume group values stream in sequential order hence sequential 
+	            ;; reads from the input channel
+	            2 (async/>!! out-ch (parse-group line (async/<!! in-ch)))
 	     	    (.println *err* (str "Unexpected fragment count: " frag-count ". " line)))
-		  (.println *err* (str "Dropping [type=" msg-type "] " line)))))
-             (recur))
-           (async/close! out-ch))))
+	          (.println *err* (str "Dropping [type=" msg-type "] " line)))))
+            (recur))
+          (async/close! out-ch))))
     out-ch))
 
 (defn- process [format n in-ch]
-  (let [out-ch (async/chan buffer-size)]
+  (let [out-ch (async/chan buffer-size)
+        active-threads (atom n)]
     (dotimes [i n]
       (println (str "thread-" i))
       (async/thread
-        (loop []
-          (when-let [line (async/<!! in-ch)]
-	    (async/>!! out-ch (decode format line))
-	    (recur)))
-        (async/close! out-ch)))
+        (loop [acc []]
+          (if-let [line (async/<!! in-ch)]
+            (recur (conj acc (decode format line)))
+            (async/>!! out-ch acc)))
+        (swap! active-threads dec)
+        (if (= @active-threads 0)
+          (async/close! out-ch))))
     out-ch))
 
 (defn- collect [in-ch]
   (let [out-ch (async/chan)]
     (async/thread
-      (loop [msgs []]
-        (if-let [line (async/<!! in-ch)]
-          (recur (conj msgs line))
-          (async/>!! out-ch msgs))))
+      (loop [acc []]
+        (if-let [msgs (async/<!! in-ch)]
+          (recur (concat acc msgs))
+          (async/>!! out-ch acc))))
     out-ch))
 
 (defn run [in-ch output-filename types nthreads format]
