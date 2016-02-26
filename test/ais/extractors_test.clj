@@ -35,3 +35,9 @@
     (is (= (extract-line aivdo-message) 12345)))
   (testing "Extract nil with tag key embedded in payload"
     (is (= (extract-line tricky-message) nil))))
+
+(deftest extract-fragment-info-test
+  (testing "Extract fragment info"
+    (is (= (extract-fragment-info aivdm-message) (list 1 1)))
+    (is (= (extract-fragment-info (nth group-message 0)) (list 2 1)))
+    (is (= (extract-fragment-info (nth group-message 1)) (list 2 2)))))

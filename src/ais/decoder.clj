@@ -89,9 +89,8 @@
         (if-let [line (async/<!! in-ch)]
           (do 
             (when (ais-ex/verified-message-syntax? line)
-              (let [msg-type   (extract-type line)
-                    frag-count (ais-ex/extract-fragment-count line)
-	            frag-num   (ais-ex/extract-fragment-number line)]
+              (let [msg-type (extract-type line)
+                    [frag-count frag-num] (ais-ex/extract-fragment-info line)]
                 (if (and (types msg-type) (= frag-num 1))
 	          (condp = frag-count
 	            1 (async/>!! out-ch line)

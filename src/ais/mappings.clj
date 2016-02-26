@@ -8,19 +8,19 @@
 
 (defn- const [c & _] c)
 
-(def tag-block (hash-map
-  "c" { :desc "Timestamp" 
-        :tag  "timestamp" 
-        :ex   ais-ex/extract-timestamp 
-        :fn   #(ais-util/timestamp->iso (* 1000 (read-string %))) } 
-  "s" { :desc "Source"
-        :tag  "station"
-        :ex   ais-ex/extract-source
-        :fn   #(identity %)} 
-  "n" { :desc "Line"
-        :tag  "line"
-        :ex   ais-ex/extract-line
-        :fn   #(read-string %) } ))
+(def tag-mapping (hash-map
+  "c" { :desc  "Timestamp" 
+        :tag   "timestamp" 
+        :ex-fn ais-ex/extract-timestamp 
+        :fn    #(ais-util/timestamp->iso (* 1000 (read-string %))) } 
+  "s" { :desc  "Source"
+        :tag   "station"
+        :ex-fn ais-ex/extract-source
+        :fn    #(identity %)} 
+  "n" { :desc  "Line"
+        :tag   "line"
+        :ex-fn ais-ex/extract-line
+        :fn    #(read-string %) } ))
 
 (defn- rot-sq [x]
   (let [factor (if (< x 0) -1 1)]

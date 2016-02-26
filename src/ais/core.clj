@@ -74,14 +74,11 @@
   (loop [t tags
          a acc]
     (if-let [tag (first t)]
-      (let [tag-map (ais-mappings/tag-block tag)]
-        (if-let [value ((tag-map :ex) line)]
-          (recur (rest t)
-                 (collector a (tag-map :tag) ((tag-map :fn) value))) ; non-null value, parse
-          (recur (rest t)
-	         (collector a (tag-map :tag) nil))))                 ; null value, pass thru
+      (let [spec (ais-mappings/tag-mapping tag)
+            value ((spec :ex-fn) line)]
+        (recur (rest t)
+               (collector a (spec :tag) (if (nil? value) nil ((spec :fn) value)))))
       a)))
-    
 
 (defn- preprocess-bitfields [envelope]
   (ais-util/pad 

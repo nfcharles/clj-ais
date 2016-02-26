@@ -9,7 +9,6 @@
   ([tstamp]
     (timestamp->iso tstamp "yyyyMMdd'T'HHmmss'Z'")))
 
-
 (defn checksum [msg]
   (let [sum (Integer/toString (reduce bit-xor 0 (map int (seq msg))) 16)]
     (if (== (count sum) 1)
@@ -35,14 +34,6 @@
 (defn char->decimal [c]
  (let [tmp (- (int c) 48)]
     (if (> tmp 40) (- tmp 8) tmp)))
-
-
-(defn decimal->binary [num]
-  (let [binary (Integer/toString num 2)
-        len (count binary)]
-    (str (->> (repeat (- 6 len) "0")
-              (apply str))
-         binary)))
 
 (defn decimal->binary
   ([num str-len]

@@ -25,6 +25,8 @@
 
 (def fragment-number-matcher #"AIVD[MO],\d,(\d)")
 
+(def fragment-info-matcher #"AIVD[MO],(\d),(\d),")
+
 (def payload-matcher #"AIVD[MO],\d,\d,\d?,[AB]?,(.+),")
 
 (def fill-bits-matcher #"AIVD[MO],\d,\d,\d?,[AB]?,.+,(\d)")
@@ -67,6 +69,9 @@
 
 (defn extract-fragment-number [message]
   (read-string (nth (re-find fragment-number-matcher message) 1)))
+
+(defn extract-fragment-info [message]
+  (map read-string (rest (re-find fragment-info-matcher message))))
 
 (defn extract-payload [message]
   (nth (re-find payload-matcher message) 1))
