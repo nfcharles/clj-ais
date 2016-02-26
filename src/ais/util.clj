@@ -27,13 +27,12 @@
        (+ 1)
        (* -1)))
 
-(defn char-str->decimal [c]
-  (let [tmp (- (int (.charAt c 0)) 48)]
-    (if (> tmp 40) (- tmp 8) tmp)))
-
 (defn char->decimal [c]
  (let [tmp (- (int c) 48)]
     (if (> tmp 40) (- tmp 8) tmp)))
+
+(defn char-str->decimal [c]
+  (char->decimal (.charAt c 0)))
 
 (defn decimal->binary
   ([num str-len]
