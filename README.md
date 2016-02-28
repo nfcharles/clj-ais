@@ -1,6 +1,6 @@
 # clj-ais
 
-clj-ais is a library for decoding ais messages.  It was designed with reference to the following document http://catb.org/gpsd/AIVDM.html and tested against the following online decoder -- which support a subset of message types -- http://rl.se/aivdm.  Also, integration tests were performed against http://fossies.org/linux/gpsd/test/sample.aivdm, which contains an exhastive list of ais messages and their decoded values.
+clj-ais is a library for decoding AIS (Automatic Identification System) messages.  It was designed with reference to the following document http://catb.org/gpsd/AIVDM.html and tested against the following online decoder -- which support a subset of message types -- http://rl.se/aivdm.  Also, integration tests were performed against http://fossies.org/linux/gpsd/test/sample.aivdm, which contains an comprehensive list of AIS messages and their decoded values.
 
 
 #### Supported Types
