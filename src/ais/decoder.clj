@@ -26,7 +26,7 @@
 
 (def buffer-size 1000)
 
-(def msg-types (into {} (for [k (range 1 28)] [k false])))
+(def ais-msg-types (into {} (for [k (range 1 28)] [k false])))
 
 ;;---
 ;; Writers
@@ -54,14 +54,19 @@
 ;; Util
 ;;--
 
-(defn- handled-types [types]
-  (apply merge msg-types types))
+(defn- merge-types [types]
+  (apply merge ais-msg-types types))
 
 (defn- parse-types [types]
   (into {} (for [k (clojure.string/split types #",")] [(read-string k) true])))
 
-(defn- extract-type [msg]
-  (ais-util/char-str->decimal (subs (ais-ex/extract-payload msg) 0 1)))
+(defn- extract-type [payload]
+  (->> (seq payload)
+       (first)
+       (ais-util/char->decimal)))
+
+(defn valid-syntax? [message]
+  (== (count (ais-ex/extract-envelope-checksum message)) 2))
 
 
 ;;---
@@ -82,16 +87,16 @@
       (strace/print-stack-trace e)
       "COALESCE-FAILED")))
       
-(defn- split-stream [in-ch types]
+(defn- filter-stream [in-ch supported-types]
   (let [out-ch (async/chan buffer-size)]
     (async/thread
       (loop []
         (if-let [line (async/<!! in-ch)]
           (do 
-            (when (ais-ex/verified-message-syntax? line)
-              (let [msg-type (extract-type line)
+            (when (valid-syntax? line)
+              (let [msg-type (extract-type (ais-ex/extract-payload line))
                     [frag-count frag-num] (ais-ex/extract-fragment-info line)]
-                (if (and (types msg-type) (= frag-num 1))
+                (if (and (supported-types msg-type) (= frag-num 1))
 	          (condp = frag-count
 	            1 (async/>!! out-ch line)
 	            ;; We assume group values stream in sequential order hence sequential 
@@ -127,8 +132,8 @@
           (async/>!! out-ch acc))))
     out-ch))
 
-(defn run [in-ch output-filename types nthreads format]
-  (let [filtered (split-stream in-ch types)
+(defn run [in-ch output-filename supported-types nthreads format]
+  (let [filtered (filter-stream in-ch supported-types)
        	processed (process format nthreads filtered)
         msgs (async/<!! (collect processed))]
     (println (str "writing " (count msgs) " messages."))
@@ -140,8 +145,8 @@
 (defn -main
   [& args]
   (let [output-filename (nth args 0)
-        types (handled-types (parse-types (nth args 1)))
+        supported-types (merge-types (parse-types (nth args 1)))
         nthreads (Integer. (nth args 2))
 	format (nth args 3)
         stream (async/to-chan (line-seq stdin-reader))]
-    (time (run stream output-filename types nthreads format))))
+    (time (run stream output-filename supported-types nthreads format))))
