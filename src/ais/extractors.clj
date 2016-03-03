@@ -84,6 +84,3 @@
 
 (defn extract-envelope-checksum [message]
   (rest (re-find envelope-checksum-matcher message)))
-
-(defn verified-message-syntax? [message]
-  (== (count (extract-envelope-checksum message)) 2))

@@ -49,10 +49,13 @@
 ;; Core
 ;; ---
 
-(defn payload->binary [msg]
-  (->> (seq msg)
-       (map #(ais-util/char->decimal %))
-       (map #(ais-util/decimal->binary %))
+(defn- char->binary [c]
+  (ais-util/decimal->binary 
+   (ais-util/char->decimal c)))
+
+(defn payload->binary [payload]
+  (->> (seq payload)
+       (map char->binary)
        (apply str)))
 
 (defn decode-binary-payload [specs acc collector bits]
