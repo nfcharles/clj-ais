@@ -74,18 +74,6 @@
                           ((spec :fn) (subs b 0 block-len)))))
       a)))
 
-;; if line --> tag-block is nil, skip
-(defn parse-tag-block [acc collector block tags]
-  (loop [t tags
-         a acc]
-    (if-let [tag (first t)]
-      (let [spec (ais-mappings/tag-mapping tag)
-            value ((spec :ex-fn) block)]
-        (recur (rest t)
-               (collector a (spec :tag) (if (nil? value) nil ((spec :fn) value)))))
-      a)))
-
-
 (defn parse-tag-block [acc collector tags block]
   (loop [t tags
          a acc]
@@ -96,18 +84,16 @@
                (collector a (spec :tag) (if (nil? value) nil ((spec :fn) value)))))
       a)))
 
-;; if tag-block is nil, skip
 (defn parse [data-format tag-block payload fill-bits]
   (let [[acc collector] (data-collector data-format)
         bits (ais-util/pad (payload->binary payload) fill-bits)]
-    (decode-binary-payload (ais-mappings/parsing-rules bits)                       ; type specification
+    (decode-binary-payload (ais-mappings/parsing-rules bits)                    ; msg-type field decoding specs
                            (parse-tag-block acc 
                                             collector 
                                             ["c" "s" "n"] 
-                                            (if (nil? tag-block)
-                                              "" tag-block))                       ; use metadata as initial accumulator
-                           collector                                               ; accumulator function
-                           bits)))                                                 ; raw binary payload
+                                            (if (nil? tag-block) "" tag-block)) ; use tag metadata as initial accumulator
+                           collector                                            ; accumulator function
+                           bits)))                                              ; raw binary payload
 
 (defn parse-ais
   ([data-format msg]
@@ -148,5 +134,5 @@
   "I don't do a whole lot ... yet."
   [& args]
   (let [data-format (nth args 0)
-        envelope (nth args 1)]
-   (println (json/write-str (parse data-format envelope)))))
+        message (nth args 1)]
+   (println (json/write-str (parse-ais data-format message)))))
