@@ -81,6 +81,3 @@
     (let [[acc collector] (data-collector "csv")]
       (is (= (decode-binary-payload map-2 acc collector bin-load-2) dec-load-2)))))
 
-(deftest parse-group-test
-  (testing "Coalesce mutipart message"
-    (is (= (coalesce-group group-message) assembled-group))))

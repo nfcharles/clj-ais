@@ -73,20 +73,6 @@
 ;; Core
 ;;---
 
-(defn- decode [format msg]
-  (try
-    (ais-core/parse format msg)
-    (catch Exception e
-      (strace/print-stack-trace e)
-      "DECODE-FAILED")))
-
-(defn- parse-group [& msgs]
-  (try
-    (ais-core/coalesce-group msgs)
-    (catch Exception e
-      (strace/print-stack-trace e)
-      "COALESCE-FAILED")))
-      
 (defn- filter-stream [in-ch supported-types]
   (let [out-ch (async/chan buffer-size)]
     (async/thread
@@ -98,10 +84,10 @@
                     [frag-count frag-num] (ais-ex/extract-fragment-info line)]
                 (if (and (supported-types msg-type) (= frag-num 1))
 	          (condp = frag-count
-	            1 (async/>!! out-ch line)
+	            1 (async/>!! out-ch [line])
 	            ;; We assume group values stream in sequential order hence sequential 
 	            ;; reads from the input channel
-	            2 (async/>!! out-ch (parse-group line (async/<!! in-ch)))
+	            2 (async/>!! out-ch [line (async/<!! in-ch)])
 	     	    (.println *err* (str "Unexpected fragment count: " frag-count ". " line)))
 	          (.println *err* (str "Dropping [type=" msg-type "] " line)))))
             (recur))
@@ -115,8 +101,8 @@
       (println (str "thread-" i))
       (async/thread
         (loop [acc []]
-          (if-let [line (async/<!! in-ch)]
-            (recur (conj acc (decode format line)))
+          (if-let [msgs (async/<!! in-ch)]
+            (recur (conj acc (apply ais-core/decode format msgs)))
             (async/>!! out-ch acc)))
         (swap! active-threads dec)
         (if (= @active-threads 0)

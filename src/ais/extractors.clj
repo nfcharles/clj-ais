@@ -5,7 +5,7 @@
 ;; Matchers
 ;;
 
-(def tag-block-matcher #"^\\(.+)\\")
+(def tag-block-matcher #"^(\\.+\\)")
 
 (def group-matcher #"g:\d-(\d-\d\d\d\d).+AIVD[MO],\d,\d,\d?,([AB]?)")
 

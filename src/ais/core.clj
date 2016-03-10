@@ -1,5 +1,6 @@
 (ns ais.core
   (:require [clojure.data.json :as json])
+  (:require [clojure.stacktrace :as strace])
   (:require [ais.extractors  :as ais-ex])
   (:require [ais.mappings  :as ais-mappings])
   (:require [ais.types :as ais-types])
@@ -73,49 +74,71 @@
                           ((spec :fn) (subs b 0 block-len)))))
       a)))
 
-(defn parse-tag-block [acc collector line tags]
+;; if line --> tag-block is nil, skip
+(defn parse-tag-block [acc collector block tags]
   (loop [t tags
          a acc]
     (if-let [tag (first t)]
       (let [spec (ais-mappings/tag-mapping tag)
-            value ((spec :ex-fn) line)]
+            value ((spec :ex-fn) block)]
         (recur (rest t)
                (collector a (spec :tag) (if (nil? value) nil ((spec :fn) value)))))
       a)))
 
-(defn- preprocess-bitfields [envelope]
-  (ais-util/pad 
-   (payload->binary (ais-ex/extract-payload envelope)) 
-   (ais-ex/extract-fill-bits envelope)))
 
-(defn parse [data-format line]
+(defn parse-tag-block [acc collector tags block]
+  (loop [t tags
+         a acc]
+    (if-let [tag (first t)]
+      (let [spec (ais-mappings/tag-mapping tag)
+            value ((spec :ex-fn) block)]
+        (recur (rest t)
+               (collector a (spec :tag) (if (nil? value) nil ((spec :fn) value)))))
+      a)))
+
+;; if tag-block is nil, skip
+(defn parse [data-format tag-block payload fill-bits]
   (let [[acc collector] (data-collector data-format)
-        [envelope checksum] (ais-ex/extract-envelope-checksum line)]
-    (if (not-any? nil? [envelope checksum])
-      (if (= (ais-util/checksum envelope) checksum)
-        (let [bits (preprocess-bitfields envelope)]
-          (decode-binary-payload (ais-mappings/parsing-rules bits)                  ; type specification
-                                 (parse-tag-block acc collector line ["c" "s" "n"]) ; use metadata as initial accumulator
-                                 collector                                          ; accumulator function
-                                 bits))                                             ; raw binary payload
-        (throw (Exception. (str "ChecksumVerificationException: chksum(" envelope ") != " checksum))))
-      (throw (Exception. (str "MessageSyntaxException: failed to extract (env, chksum) from message: " line))))))
+        bits (ais-util/pad (payload->binary payload) fill-bits)]
+    (decode-binary-payload (ais-mappings/parsing-rules bits)                       ; type specification
+                           (parse-tag-block acc 
+                                            collector 
+                                            ["c" "s" "n"] 
+                                            (if (nil? tag-block)
+                                              "" tag-block))                       ; use metadata as initial accumulator
+                           collector                                               ; accumulator function
+                           bits)))                                                 ; raw binary payload
 
-;; ---
-;; Multipart Core
-;; ---
+(defn parse-ais
+  ([data-format msg]
+    (parse data-format
+           (ais-ex/extract-tag-block msg)
+           (ais-ex/extract-payload msg)
+           (ais-ex/extract-fill-bits msg)))
+  ([data-format msg-a msg-b]
+    (parse data-format
+           (ais-ex/extract-tag-block msg-a)
+           (str 
+            (ais-ex/extract-payload msg-a)
+            (ais-ex/extract-payload msg-b))
+           (ais-ex/extract-fill-bits msg-b))))
 
-(defn coalesce-group [msgs]
-  ;; Coalesce multipart message into complete message
-  (let [sorted (sort-by ais-ex/extract-fragment-number msgs)
-        first-msg (first sorted)
-        envelope (str
-                   (ais-ex/extract-packet-type first-msg)      
-                   ",1,1,1,A,"
-                   (reduce str (map ais-ex/extract-payload sorted))
-                   ","
-                   (ais-ex/extract-fill-bits (last sorted)))]
-    (str "\\" (ais-ex/extract-tag-block first-msg) "\\!" envelope "*" (ais-util/checksum envelope))))
+(defn verify [& msgs]
+  (for [msg msgs]
+    (let [[env chksum] (ais-ex/extract-envelope-checksum msg)]
+      (if (not-any? nil? [env chksum])
+        (if (= (ais-util/checksum env) chksum)
+          msg
+          (throw (Exception. (str "ChecksumVerificationException: chksum(" env ") != " chksum))))
+        (throw (Exception. (str "MessageSyntaxException: failed to extract (env, chksum) from message: " msg)))))))
+
+(defn decode [format & msgs]
+  (try
+    (apply parse-ais format (apply verify msgs))
+    (catch Exception e
+         (strace/print-stack-trace e)
+      "DECODE-FAILED")))
+
 
 ;;---
 ;; Entrypoint
