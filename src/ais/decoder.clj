@@ -73,7 +73,7 @@
 ;; Core
 ;;---
 
-(defn- filter-stream [in-ch supported-types]
+(defn- filter-stream [supported-types in-ch]
   (let [out-ch (async/chan buffer-size)]
     (async/thread
       (loop []
@@ -109,6 +109,24 @@
           (async/close! out-ch))))
     out-ch))
 
+(comment
+(defn- process [format n in-ch]
+  (let [out-ch (async/chan buffer-size)
+        active-threads (atom n)]
+    (dotimes [i n]
+      (println (str "thread-" i))
+      (async/thread
+        (loop []
+          (if-let [msgs (async/<!! in-ch)]
+            (do
+              (async/>!! out-ch (apply ais-core/decode format msgs))
+              (recur))))
+        (swap! active-threads dec)
+        (if (= @active-threads 0)
+          (async/close! out-ch))))
+    out-ch))
+)
+
 (defn- collect [in-ch]
   (let [out-ch (async/chan)]
     (async/thread
@@ -118,21 +136,46 @@
           (async/>!! out-ch acc))))
     out-ch))
 
-(defn run [in-ch output-filename supported-types nthreads format]
-  (let [filtered (filter-stream in-ch supported-types)
+(defn- collect [in-ch]
+  (let [out-ch (async/chan)]
+    (async/thread
+      (loop [acc []]
+        (if-let [msg (async/<!! in-ch)]
+          (recur (conj acc msg))
+          (async/>!! out-ch acc))))
+    out-ch))
+
+(defn writer [format prefix msgs]
+  (let [out-ch (async/chan)
+        n (count msgs)
+        active-threads (atom n)]
+    (doseq [[i batch] (map list (range n) msgs)]
+      (println (str "write thread-" i))
+      (async/thread
+        (write (str prefix "-thread-" i) format batch)
+        (swap! active-threads dec)
+        (when (= @active-threads 0)
+          (async/>!! out-ch :done)
+          (async/close! out-ch))))
+    out-ch))
+
+(defn run [in-ch output-prefix supported-types nthreads format]
+  (let [filtered (filter-stream supported-types in-ch)
        	processed (process format nthreads filtered)
-        msgs (async/<!! (collect processed))]
-    (println (str "writing " (count msgs) " messages."))
-    (write output-filename format msgs)))
+        collected (async/<!! (collect processed))]
+    ;; Thread macro uses daemon threads so we must explicitly block 
+    ;; until all writer threads are complete to prevent premature
+    ;; termination of main thread.
+    (async/<!! (writer format output-prefix collected))))
 
 (def stdin-reader
   (java.io.BufferedReader. *in*))
 
 (defn -main
   [& args]
-  (let [output-filename (nth args 0)
+  (let [output-prefix (nth args 0)
         supported-types (merge-types (parse-types (nth args 1)))
         nthreads (Integer. (nth args 2))
 	format (nth args 3)
         stream (async/to-chan (line-seq stdin-reader))]
-    (time (run stream output-filename supported-types nthreads format))))
+    (time (run stream output-prefix supported-types nthreads format))))
