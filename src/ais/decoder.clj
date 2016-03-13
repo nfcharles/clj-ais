@@ -21,7 +21,7 @@
 ;;; There are simplifying assumptions as the primary goal is to illustrate a basic sample implementation
 ;;; of the library.
 ;;;   
-;;; Multipart messages are assumed to flow in direct sequential, chronological order.      
+;;; Multipart messages are assumed to flow in sequential, chronological order.      
 
 
 (def buffer-size 1000)
@@ -68,12 +68,11 @@
 (defn valid-syntax? [message]
   (== (count (ais-ex/extract-envelope-checksum message)) 2))
 
-
 ;;---
 ;; Core
 ;;---
 
-(defn- filter-stream [in-ch supported-types]
+(defn- filter-stream [supported-types in-ch]
   (let [out-ch (async/chan buffer-size)]
     (async/thread
       (loop []
@@ -85,8 +84,8 @@
                 (if (and (supported-types msg-type) (= frag-num 1))
 	          (condp = frag-count
 	            1 (async/>!! out-ch [line])
-	            ;; We assume group values stream in sequential order hence sequential 
-	            ;; reads from the input channel
+	            ;; Not robust!!!  Assumes multipart messages stream in sequential order.  
+                    ;; In practice groups do tend to stream in proper order however.
 	            2 (async/>!! out-ch [line (async/<!! in-ch)])
 	     	    (.println *err* (str "Unexpected fragment count: " frag-count ". " line)))
 	          (.println *err* (str "Dropping [type=" msg-type "] " line)))))
@@ -113,26 +112,42 @@
   (let [out-ch (async/chan)]
     (async/thread
       (loop [acc []]
-        (if-let [msgs (async/<!! in-ch)]
-          (recur (concat acc msgs))
+        (if-let [msg (async/<!! in-ch)]
+          (recur (conj acc msg))
           (async/>!! out-ch acc))))
     out-ch))
 
-(defn run [in-ch output-filename supported-types nthreads format]
-  (let [filtered (filter-stream in-ch supported-types)
+(defn- writer [format prefix msgs]
+  (let [out-ch (async/chan)
+        n (count msgs)
+        active-threads (atom n)]
+    (doseq [[i batch] (map list (range n) msgs)]
+      (println (str "write thread-" i))
+      (async/thread
+        (write (str prefix "-thread-" i) format batch)
+        (swap! active-threads dec)
+        (when (= @active-threads 0)
+          (async/>!! out-ch :done)
+          (async/close! out-ch))))
+    out-ch))
+
+(defn run [in-ch output-prefix supported-types nthreads format]
+  (let [filtered (filter-stream supported-types in-ch)
        	processed (process format nthreads filtered)
-        msgs (async/<!! (collect processed))]
-    (println (str "writing " (count msgs) " messages."))
-    (write output-filename format msgs)))
+        collected (async/<!! (collect processed))]
+    ;; Thread macro uses daemon threads so we must explicitly block 
+    ;; until all writer threads are complete to prevent premature
+    ;; termination of main thread.
+    (async/<!! (writer format output-prefix collected))))
 
 (def stdin-reader
   (java.io.BufferedReader. *in*))
 
 (defn -main
   [& args]
-  (let [output-filename (nth args 0)
+  (let [output-prefix (nth args 0)
         supported-types (merge-types (parse-types (nth args 1)))
         nthreads (Integer. (nth args 2))
 	format (nth args 3)
         stream (async/to-chan (line-seq stdin-reader))]
-    (time (run stream output-filename supported-types nthreads format))))
+    (time (run stream output-prefix supported-types nthreads format))))
