@@ -21,7 +21,7 @@
 ;;; There are simplifying assumptions as the primary goal is to illustrate a basic sample implementation
 ;;; of the library.
 ;;;   
-;;; Multipart messages are assumed to flow in direct sequential, chronological order.      
+;;; Multipart messages are assumed to flow in sequential, chronological order.      
 
 
 (def buffer-size 1000)
@@ -68,7 +68,6 @@
 (defn valid-syntax? [message]
   (== (count (ais-ex/extract-envelope-checksum message)) 2))
 
-
 ;;---
 ;; Core
 ;;---
@@ -85,8 +84,8 @@
                 (if (and (supported-types msg-type) (= frag-num 1))
 	          (condp = frag-count
 	            1 (async/>!! out-ch [line])
-	            ;; We assume group values stream in sequential order hence sequential 
-	            ;; reads from the input channel
+	            ;; Not robust!!!  Assumes multipart messages stream in sequential order.  
+                    ;; In practice groups do tend to stream in proper order however.
 	            2 (async/>!! out-ch [line (async/<!! in-ch)])
 	     	    (.println *err* (str "Unexpected fragment count: " frag-count ". " line)))
 	          (.println *err* (str "Dropping [type=" msg-type "] " line)))))
@@ -109,33 +108,6 @@
           (async/close! out-ch))))
     out-ch))
 
-(comment
-(defn- process [format n in-ch]
-  (let [out-ch (async/chan buffer-size)
-        active-threads (atom n)]
-    (dotimes [i n]
-      (println (str "thread-" i))
-      (async/thread
-        (loop []
-          (if-let [msgs (async/<!! in-ch)]
-            (do
-              (async/>!! out-ch (apply ais-core/decode format msgs))
-              (recur))))
-        (swap! active-threads dec)
-        (if (= @active-threads 0)
-          (async/close! out-ch))))
-    out-ch))
-)
-
-(defn- collect [in-ch]
-  (let [out-ch (async/chan)]
-    (async/thread
-      (loop [acc []]
-        (if-let [msgs (async/<!! in-ch)]
-          (recur (concat acc msgs))
-          (async/>!! out-ch acc))))
-    out-ch))
-
 (defn- collect [in-ch]
   (let [out-ch (async/chan)]
     (async/thread
@@ -145,7 +117,7 @@
           (async/>!! out-ch acc))))
     out-ch))
 
-(defn writer [format prefix msgs]
+(defn- writer [format prefix msgs]
   (let [out-ch (async/chan)
         n (count msgs)
         active-threads (atom n)]
