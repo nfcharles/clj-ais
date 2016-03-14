@@ -124,7 +124,7 @@
     (doseq [[i batch] (map list (range n) msgs)]
       (println (str "write thread-" i))
       (async/thread
-        (write (str prefix "-thread-" i) format batch)
+        (write (str prefix "-part-" i) format batch)
         (swap! active-threads dec)
         (when (= @active-threads 0)
           (async/>!! out-ch :done)
@@ -132,13 +132,13 @@
     out-ch))
 
 (defn run [in-ch output-prefix supported-types nthreads format]
-  (let [filtered (filter-stream supported-types in-ch)
-       	processed (process format nthreads filtered)
-        collected (async/<!! (collect processed))]
+  (let [out-ch (->> (filter-stream supported-types in-ch)
+                    (process format nthreads)
+                    (collect))]
     ;; Thread macro uses daemon threads so we must explicitly block 
     ;; until all writer threads are complete to prevent premature
     ;; termination of main thread.
-    (async/<!! (writer format output-prefix collected))))
+    (async/<!! (writer format output-prefix (async/<!! out-ch)))))
 
 (def stdin-reader
   (java.io.BufferedReader. *in*))
