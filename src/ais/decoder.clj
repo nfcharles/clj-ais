@@ -66,7 +66,7 @@
        (ais-util/char->decimal)))
 
 (defn valid-syntax? [message]
-  (== (count (ais-ex/extract-envelope-checksum message)) 2))
+  (== (count (ais-ex/parse "env-chksum" message)) 2))
 
 ;;---
 ;; Core
@@ -79,8 +79,8 @@
         (if-let [line (async/<!! in-ch)]
           (do 
             (when (valid-syntax? line)
-              (let [msg-type (extract-type (ais-ex/extract-payload line))
-                    [frag-count frag-num] (ais-ex/extract-fragment-info line)]
+              (let [msg-type (extract-type (ais-ex/parse "payload" line))
+                    [frag-count frag-num] (ais-ex/parse "frag-info" line)]
                 (if (and (supported-types msg-type) (= frag-num 1))
 	          (condp = frag-count
 	            1 (async/>!! out-ch [line])

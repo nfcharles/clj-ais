@@ -11,15 +11,15 @@
 (def tag-mapping (hash-map
   "c" { :desc  "Timestamp" 
         :tag   "timestamp" 
-        :ex-fn ais-ex/extract-timestamp 
-        :fn    #(ais-util/timestamp->iso (* 1000 (read-string %))) } 
+        :ex-fn (partial ais-ex/parse "c")
+        :fn    #(ais-util/timestamp->iso (* 1000 %)) } 
   "s" { :desc  "Source"
         :tag   "station"
-        :ex-fn ais-ex/extract-source
+        :ex-fn (partial ais-ex/parse "s")
         :fn    #(identity %)} 
   "n" { :desc  "Line"
         :tag   "line"
-        :ex-fn ais-ex/extract-line
+        :ex-fn (partial ais-ex/parse "n")
         :fn    #(read-string %) } ))
 
 (defn- rot-sq [x]

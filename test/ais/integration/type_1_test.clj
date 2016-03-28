@@ -70,9 +70,9 @@
 (deftest type-1-test
   (testing "Type 1 decode - 1"
     (let [expected (select-fields type-1-1)
-    	  actual (select-fields (parse "json" "!AIVDM,1,1,,A,15RTgt0PAso;90TKcjM8h6g208CQ,0*4A"))]
+    	  actual (select-fields (parse-ais "json" "!AIVDM,1,1,,A,15RTgt0PAso;90TKcjM8h6g208CQ,0*4A"))]
       (is (= expected actual))))
   (testing "Type 1 decode - 2"
     (let [expected (select-fields type-1-2)
-    	  actual (select-fields (parse "json" "!AIVDM,1,1,,A,16SteH0P00Jt63hHaa6SagvJ087r,0*42"))]
+    	  actual (select-fields (parse-ais "json" "!AIVDM,1,1,,A,16SteH0P00Jt63hHaa6SagvJ087r,0*42"))]
       (is (= expected actual)))))
