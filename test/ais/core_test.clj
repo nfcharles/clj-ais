@@ -53,25 +53,25 @@
 (deftest parse-tag-block-test
   (testing "Parse 'c' tag - json"
     (let [[acc collector] (data-collector "json")]
-      (is (= (parse-tag-block acc collector aivdm-message ["c"]) {"timestamp" "20151123T155500Z"}))))
+      (is (= (parse-tag-block acc collector ["c"] aivdm-message) {"timestamp" "20151123T155500Z"}))))
   (testing "Parse 'c' tag - csv"
     (let [[acc collector] (data-collector "csv")]
-      (is (= (parse-tag-block acc collector aivdm-message ["c"]) ["20151123T155500Z"]))))
+      (is (= (parse-tag-block acc collector ["c"] aivdm-message) ["20151123T155500Z"]))))
   (testing "Parse 'c' tag from tagless message"
     (let [[acc collector] (data-collector "json")]
-      (is (= (parse-tag-block acc collector aivdm-message-no-tags ["c"]) {"timestamp" nil}))))
+      (is (= (parse-tag-block acc collector ["c"] aivdm-message-no-tags) {"timestamp" nil}))))
   (testing "Parse 'c' tag from tagless message"
     (let [[acc collector] (data-collector "csv")]
-      (is (= (parse-tag-block acc collector aivdm-message-no-tags ["c"]) [nil]))))
+      (is (= (parse-tag-block acc collector ["c"] aivdm-message-no-tags) [nil]))))
   (testing "Parse 's' tag - json"
     (let [[acc collector] (data-collector "json")]
-      (is (= (parse-tag-block acc collector aivdm-message ["s"]) {"station" "FooBar"}))))
+      (is (= (parse-tag-block acc collector ["s"] aivdm-message) {"station" "FooBar"}))))
   (testing "Parse 's' tag from tagless message"
     (let [[acc collector] (data-collector "json")]
-      (is (= (parse-tag-block acc collector aivdm-message-no-tags ["s"]) {"station" nil}))))
+      (is (= (parse-tag-block acc collector ["s"] aivdm-message-no-tags) {"station" nil}))))
   (testing "Parse multiple tags - json"
     (let [[acc collector] (data-collector "json")]
-      (is (= (parse-tag-block acc collector aivdm-message ["c" "s"]) {"timestamp" "20151123T155500Z" "station" "FooBar"})))))
+      (is (= (parse-tag-block acc collector ["c" "s"] aivdm-message) {"timestamp" "20151123T155500Z" "station" "FooBar"})))))
 
 (deftest decode-binary-payload-test
   (testing "Decode binary payload - json"

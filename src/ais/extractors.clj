@@ -1,86 +1,65 @@
 (ns ais.extractors
   (:gen-class))
 
-;;
-;; Matchers
-;;
+;;;
+;;; ----- MESSAGE SYNTAX -----
+;;;
+;;; \g:1-2-73874,n:157036,s:r003669945,c:1241544035*4A\!AIVDM,1,1,,B,15N4cJ`005Jrek0H@9n`DW5608EP,0*13
+;;; 
+;;; Tag Block
+;;; ---------
+;;; \g:(1),n:(2),c:(3),s:(4)*(5)\
+;;; 
+;;; 1: Sentence grouping
+;;; 2: Line count
+;;; 3: Unix time in seconds or milliseconds
+;;; 4: Source / Station
+;;; 5: Tag block checksum
+;;;
+;;; Message Envelope
+;;; ----------------
+;;; !(1),(2),(3),(4),(5),(6),(7)*(8)
+;;;
+;;; 1: Packet type
+;;; 2: Count of fragments    (> 1 for multi-part message)
+;;; 3: Fragment number       (1..n)
+;;; 4: Sequential message ID (applicable to multi-part messages)
+;;; 5: Radio channel code    (A | B)
+;;; 6: Data payload
+;;; 7: Number of fill bits
+;;; 8: Envelope checksum
 
-(def tag-block-matcher #"^(\\.+\\)")
+(defn- ext-raw [regex msg]
+   (nth (re-find regex msg) 1))
 
-(def group-matcher #"g:\d-(\d-\d\d\d\d).+AIVD[MO],\d,\d,\d?,([AB]?)")
+(defn- ext [regex msg]
+  (if-let [ret (ext-raw regex msg)]
+    (read-string ret) nil))
 
-(def timestamp-matcher #"^\\.*c:(\d*).*\\")
+(defn- ext-multi-raw [regex msg]
+  (rest (re-find regex msg)))
 
-(def source-matcher #"^\\.*s:(\w*).*\\")
+(defn- ext-multi [regex msg]
+  (map read-string (ext-multi-raw regex msg)))
 
-(def line-matcher #"^\\.*n:(\d*).*\\")
+(def -extractors (hash-map
+ "g"          { :exp #"\\.*g:\d-(\d-\d+).*\\"                                :fn #(ext-raw %1 %2) }
+ "n"          { :exp #"\\.*n:(\d*).*\\"                                      :fn #(ext %1 %2) }
+ "c"          { :exp #"\\.*c:(\d*).*\\"                                      :fn #(ext %1 %2) }
+ "t"          { :exp #"\\.*t:(\d*).*\\"                                      :fn #(ext %1 %2) }
+ "s"          { :exp #"\\.*s:(\w*).*\\"                                      :fn #(ext-raw %1 %2) }
+ "tags"       { :exp #"^(\\.+\\)"                                            :fn #(ext-raw %1 %2) }
+ "pac-type"   { :exp #"(AIVD[MO])"                                           :fn #(ext-raw %1 %2) }
+ "frag-count" { :exp #"AIVD[MO],(\d)"                                        :fn #(ext %1 %2) }
+ "frag-num"   { :exp #"AIVD[MO],\d,(\d)"                                     :fn #(ext %1 %2) }
+ "frag-info"  { :exp #"AIVD[MO],(\d),(\d)"                                   :fn #(ext-multi %1 %2) }
+ "seq-id"     { :exp #"AIVD[MO],\d,\d,(\d?)"                                 :fn #(ext-raw %1 %2) }
+ "radio-ch"   { :exp #"AIVD[MO],\d,\d,\d?,([AB]?)"                           :fn #(ext-raw %1 %2) }
+ "payload"    { :exp #"AIVD[MO],\d,\d,\d?,[AB]?,(.+),"                       :fn #(ext-raw %1 %2) }
+ "fill-bits"  { :exp #"AIVD[MO],\d,\d,\d?,[AB]?,.+,(\d)"                     :fn #(ext %1 %2) }
+ "checksum"   { :exp #"AIVD[MO],\d,\d,\d?,[AB]?,.+,\d\*([A-F0-9][A-F0-9])"   :fn #(ext-raw %1 %2) }
+ "env-chksum" { :exp #"(AIVD[MO],\d,\d,\d?,[AB]?,.+,\d)\*([A-Z0-9][A-Z0-9])" :fn #(ext-multi-raw %1 %2) } ))
 
-(def packet-type-matcher #"(AIVD[MO])")
-
-(def channel-matcher #"AIVD[MO],\d,\d,\d?,([AB]?)")
-
-(def envelope-matcher #"(AIVD[MO],\d,\d,\d?,[AB]?,.+,\d\*[A-F0-9][A-F0-9])")
-
-(def fragment-count-matcher #"AIVD[MO],(\d)")
-
-(def fragment-number-matcher #"AIVD[MO],\d,(\d)")
-
-(def fragment-info-matcher #"AIVD[MO],(\d),(\d),")
-
-(def payload-matcher #"AIVD[MO],\d,\d,\d?,[AB]?,(.+),")
-
-(def fill-bits-matcher #"AIVD[MO],\d,\d,\d?,[AB]?,.+,(\d)")
-
-(def checksum-matcher #"AIVD[MO],\d,\d,\d?,[AB]?,.+,\d\*([A-F0-9][A-F0-9])")
-
-(def envelope-checksum-matcher #"(AIVD[MO],\d,\d,\d?,[AB]?,.+,\d)\*([A-Z0-9][A-Z0-9])")
-
-;;
-;; Extractors
-;;
-
-(defn extract-tag-block [message]
-  (nth (re-find tag-block-matcher message) 1))
-
-(defn extract-packet-type [message]
-  (nth (re-find packet-type-matcher message) 1))
-
-(defn extract-group [message]
-  (if-let [group (re-find group-matcher message)]
-    (apply str (rest group))))
-
-; TODO: parse int here
-(defn extract-timestamp [message]
-  (nth (re-find timestamp-matcher message) 1))
-
-(defn extract-source [message]
-  (nth (re-find source-matcher message) 1))
-
-(defn extract-line [message]
-  (if-let [line-num (nth (re-find line-matcher message) 1)]
-    (read-string line-num)
-    nil))
-
-(defn extract-envelope [message]
-  (nth (re-find envelope-matcher message) 1))
-
-(defn extract-fragment-count [message]
-  (read-string (nth (re-find fragment-count-matcher message) 1)))
-
-(defn extract-fragment-number [message]
-  (read-string (nth (re-find fragment-number-matcher message) 1)))
-
-(defn extract-fragment-info [message]
-  (map read-string (rest (re-find fragment-info-matcher message))))
-
-(defn extract-payload [message]
-  (nth (re-find payload-matcher message) 1))
-
-(defn extract-fill-bits [message]
-  (read-string (nth (re-find fill-bits-matcher message) 1)))
-
-(defn extract-checksum [message]
-  (nth (re-find checksum-matcher message) 1))
-
-(defn extract-envelope-checksum [message]
-  (rest (re-find envelope-checksum-matcher message)))
+(defn parse [field msg]
+  (let [ex (-extractors field)]
+    ((ex :fn) (ex :exp) msg)))

@@ -98,20 +98,20 @@
 (defn parse-ais
   ([data-format msg]
     (parse data-format
-           (ais-ex/extract-tag-block msg)
-           (ais-ex/extract-payload msg)
-           (ais-ex/extract-fill-bits msg)))
+           (ais-ex/parse "tags" msg)
+           (ais-ex/parse "payload" msg)
+           (ais-ex/parse "fill-bits" msg)))
   ([data-format msg-a msg-b]
     (parse data-format
-           (ais-ex/extract-tag-block msg-a)
+           (ais-ex/parse "tags" msg-a)
            (str 
-            (ais-ex/extract-payload msg-a)
-            (ais-ex/extract-payload msg-b))
-           (ais-ex/extract-fill-bits msg-b))))
+            (ais-ex/parse "payload" msg-a)
+            (ais-ex/parse "payload" msg-b))
+           (ais-ex/parse "fill-bits" msg-b))))
 
 (defn verify [& msgs]
   (for [msg msgs]
-    (let [[env chksum] (ais-ex/extract-envelope-checksum msg)]
+    (let [[env chksum] (ais-ex/parse "env-chksum" msg)]
       (if (not-any? nil? [env chksum])
         (if (= (ais-util/checksum env) chksum)
           msg
