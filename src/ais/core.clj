@@ -110,15 +110,6 @@
             (ais-ex/parse "payload" msg-b))
            (ais-ex/parse "fill-bits" msg-b))))
 
-(defn verify [& msgs]
-  (for [msg msgs]
-    (let [[env chksum] (ais-ex/parse "env-chksum" msg)]
-      (if (not-any? nil? [env chksum])
-        (if (= (ais-util/checksum env) chksum)
-          msg
-          (throw (ais.exceptions.ChecksumVerificationException. (str "CHKSUM(" env ") != " chksum ", == " (ais-util/checksum env)))))
-        (throw (ais.exceptions.MessageFormatException. (str "Failed parsing (env, chksum) from " msg)))))))
-
 (defn verify [& in-msgs]
   (loop [msgs in-msgs
          verified []]
