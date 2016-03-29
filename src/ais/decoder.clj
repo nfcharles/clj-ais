@@ -72,6 +72,13 @@
 ;; Core
 ;;---
 
+(defn decode [format & msgs]
+  (try
+    (apply ais-core/parse-ais format (apply ais-core/verify msgs))
+    (catch Exception e
+      (strace/print-stack-trace e)
+      "DECODE-FAILED")))
+
 (defn- filter-stream [supported-types in-ch]
   (let [out-ch (async/chan buffer-size)]
     (async/thread
@@ -101,7 +108,7 @@
       (async/thread
         (loop [acc []]
           (if-let [msgs (async/<!! in-ch)]
-            (recur (conj acc (apply ais-core/decode format msgs)))
+            (recur (conj acc (apply decode format msgs)))
             (async/>!! out-ch acc)))
         (swap! active-threads dec)
         (if (= @active-threads 0)
