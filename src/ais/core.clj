@@ -1,11 +1,12 @@
 (ns ais.core
   (:require [clojure.data.json :as json])
-  (:require [clojure.stacktrace :as strace])
   (:require [ais.extractors  :as ais-ex])
   (:require [ais.mappings  :as ais-mappings])
   (:require [ais.types :as ais-types])
   (:require [ais.util :as ais-util])
+  (:require [ais.exceptions :refer :all])
   (:gen-class))
+
 
 ;       _  _             _     
 ;   ___| |(_)       __ _(_)___ 
@@ -115,16 +116,20 @@
       (if (not-any? nil? [env chksum])
         (if (= (ais-util/checksum env) chksum)
           msg
-          (throw (Exception. (str "ChecksumVerificationException: chksum(" env ") != " chksum))))
-        (throw (Exception. (str "MessageSyntaxException: failed to extract (env, chksum) from message: " msg)))))))
+          (throw (ais.exceptions.ChecksumVerificationException. (str "CHKSUM(" env ") != " chksum ", == " (ais-util/checksum env)))))
+        (throw (ais.exceptions.MessageFormatException. (str "Failed parsing (env, chksum) from " msg)))))))
 
-(defn decode [format & msgs]
-  (try
-    (apply parse-ais format (apply verify msgs))
-    (catch Exception e
-         (strace/print-stack-trace e)
-      "DECODE-FAILED")))
-
+(defn verify [& in-msgs]
+  (loop [msgs in-msgs
+         verified []]
+    (if-let [msg (first msgs)]
+      (let [[env chksum] (ais-ex/parse "env-chksum" msg)]
+        (if (not-any? nil? [env chksum])
+          (if (= (ais-util/checksum env) chksum)
+            (recur (rest msgs) (conj verified msg))
+            (throw (ais.exceptions.ChecksumVerificationException. (str "CHKSUM(" env ") != " chksum ", == " (ais-util/checksum env)))))
+          (throw (ais.exceptions.MessageFormatException. (str "Failed parsing (env, chksum) from " msg)))))
+      verified)))
 
 ;;---
 ;; Entrypoint

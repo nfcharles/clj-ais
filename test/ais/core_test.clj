@@ -1,12 +1,17 @@
 (ns ais.core-test
   (:require [clojure.test :refer :all]
-            [ais.core :refer :all]))
+            [ais.core :refer :all]
+            [ais.exceptions :refer :all]))
 
 (def aivdm-message "\\s:FooBar,c:1448312100,t:1448312099*00\\!AIVDM,1,1,,B,35NVMmg00026=kRGFbD=4a;N0UFC,0*16")
 (def aivdm-message-no-tags "!AIVDM,1,1,,B,35NVMmg00026=kRGFbD=4a;N0UFC,0*16")
-(def group-message (list "\\g:1-2-1996,c:1446625797*57\\!AIVDM,2,1,6,A,581:K8@2<lS5KL@;V20dTpN0E8T>22222222221@BPR=>6e50HT2DQ@EDlp8,0*19" "\\g:2-2-1996*5A\\!AIVDM,2,2,6,A,88888888880,2*22"))
-
+(def group-message ["\\g:1-2-1996,c:1446625797*57\\!AIVDM,2,1,6,A,581:K8@2<lS5KL@;V20dTpN0E8T>22222222221@BPR=>6e50HT2DQ@EDlp8,0*19" "\\g:2-2-1996*5A\\!AIVDM,2,2,6,A,88888888880,2*22"])
 (def assembled-group "\\g:1-2-1996,c:1446625797*57\\!AIVDM,1,1,1,A,581:K8@2<lS5KL@;V20dTpN0E8T>22222222221@BPR=>6e50HT2DQ@EDlp888888888880,2*2F")
+
+(def bad-chksum-message "\\s:FooBar,c:1448312100,t:1448312099*00\\!AIVDM,1,1,,B,35NVMmg00026=kRGFbD=4a;N0UFC,0*19")
+(def bad-format-message "\\s:FooBar,c:1448312100,t:1448312099*00\\!AIVDM,1,1,B,35NVMmg00026=kRGFbD=4a;N0UFC,0*16")
+(def bad-group-message ["\\g:1-2-1996,c:1446625797*57\\!AIVDM,2,1,6,A,581:K8@2<lS5KL@;V20dTpN0E8T>22222222221@BPR=>6e50HT2DQ@EDlp8,0*18" "\\g:2-2-1996*5A\\!AIVDM,2,2,6,A,88888888880,2*22"])
+
 
 (defn- parse-field [bits]
   (Integer/parseInt bits 2))
@@ -81,3 +86,14 @@
     (let [[acc collector] (data-collector "csv")]
       (is (= (decode-binary-payload map-2 acc collector bin-load-2) dec-load-2)))))
 
+(deftest verify-test
+  (testing "Valid Message"
+    (is (= (verify aivdm-message) [aivdm-message])))
+  (testing "Valid Group"
+    (is (= (apply verify group-message) group-message)))
+  (testing "Checksum verification exception"
+    (is (thrown? ais.exceptions.ChecksumVerificationException (verify bad-chksum-message))))
+  (testing "Message format exception"
+    (is (thrown? ais.exceptions.MessageFormatException (verify bad-format-message))))
+  (testing "Group checksum exception"
+    (is (thrown? ais.exceptions.ChecksumVerificationException (apply verify bad-group-message)))))
