@@ -1,4 +1,4 @@
-(defproject ais "0.7.3-SNAPSHOT"
+(defproject ais "0.8.0-SNAPSHOT"
   :description "AIS (Automatic Identification System) decoding library"
   :url "https://github.com/nfcharles/clj-ais.git"
   :license {:name "Eclipse Public License"
@@ -10,5 +10,5 @@
   :repositories [["releases" "file:////home/ncharles/development/clojure/repos/local"]]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
-  :main ais.decoder
-  :aot [ais.decoder])
+  :main ais.resilient_decoder
+  :aot [ais.resilient_decoder])
