@@ -10,30 +10,41 @@
   (:require [clojure.stacktrace :as strace])
   (:gen-class))
 
-;;;; Resilient message decoding
+;;;                      ____                     _           
+;;;                     |  _ \  ___  ___ ___   __| | ___ _ __ 
+;;;                     | | | |/ _ \/ __/ _ \ / _` |/ _ \ '__|
+;;;                     | |_| |  __/ (_| (_) | (_| |  __/ |   
+;;;                     |____/ \___|\___\___/ \__,_|\___|_|   
+;;;
+;;; The following application is a robust implemenation of ais-lib's core decoding functionality.  In practice, multipart 
+;;; messages tend to stream in correct monotonically increasing order however we must account for all streaming configurations
+;;; and not naively consume input streams.
+;;; 
+;;; Consider two sets or multipart messages, [a, a'] and [b, b']. x+ denotes 1 more messages.
+;;;
+;;; We must consider the following senarios when parsing multipart fragments from input streams:
+;;;
+;;; 1. a  a'
+;;; 2. a' a
+;;; 3. a  x+ a'
+;;; 4. a' x+ a
+;;; 5. a  b' b a'
+;;;
+;;;
+;;; Entry point parameters:
+;;;  * output-prefix: string
+;;;    - Output filename prefix
+;;;  * supported-types: [1-28]
+;;;    - Messages types to decode.  All other messages are dropped
+;;;  * n-threads: [1..)
+;;;    - Number of processing threads.  Also sets the number of output files (where output files have the suffix
+;;;      part-n).
+;;;  * format: [csv | json]
+;;;    - Output file data format
+;;;
 
-;; Single fragment decoding -- trivial case
-;;  * forward to processing pipeline
 
-;; Multi fragment decoding -- nontrivial
-;;
-;; Multiple cases -- each depending on sequencing order
-;;
-;; 1. A - B
-;;  * messages stream back-to-back in correct ordinal positions
-;;
-;; 2. B - A
-;;  * messages stream back-to-back in reversed ordinal positions
-;;
-;; 3. A - X+ - B
-;;  * messages stream in correct ordinal positions separated by + messages
-;;
-;; 4. B - X+ - A
-;;  * messages stream in reversed ordinal positions separated by + messages
-;;
-;;
-
-(def buffer-size 1000)
+(def buffer-size 1000) 
 
 (def ais-msg-types (into {} (for [k (range 1 28)] [k false])))
 
@@ -81,10 +92,8 @@
 ;; Core
 ;;---
 
-
 (defn details [line]
   (hash-map
-    "line"       line
     "frag-count" (ais-ex/parse "frag-count" line)
     "frag-num"   (ais-ex/parse "frag-num" line)
     "type"       (extract-type (ais-ex/parse "payload" line))))
@@ -92,53 +101,36 @@
 (defn group-key [line]
   (if-let  [prefix (ais-ex/parse "g" line)]
     (let [key (format "%s-%s" prefix (ais-ex/parse "radio-ch" line))]
-      (println (format "group key: %s" key))
       key)))
 
-(defn find-match [key fragments]
-  (if-let [frag (@fragments key)]
-    frag))
+(defn find-fragment-match! [out-ch group-key msg unpaired-frags]
+  (if-let [frag-match (@unpaired-frags group-key)]
+    (async/>!! out-ch (sort-by (partial ais-ex/parse "frag-num") [msg frag-match]))
+    (swap! unpaired-frags assoc group-key msg)))
 
-(defn find-fragment-match [out-ch group-key line unpaired-frags]
-  (if-let [ret (find-match group-key unpaired-frags)]
-    (async/>!! out-ch (sort-by (partial ais-ex/parse "frag-num") [line ret]))
-    (swap! unpaired-frags assoc group-key line)))
+(defn consume-multipart [a-msg b-msg unpaired-frags out-ch]
+  (if (nil? b-msg)
+    ;; Clearly msg b is not a match, let's look up a possible match in unpaired fragments
+    (find-fragment-match! out-ch (group-key a-msg) a-msg unpaired-frags)
+    (let [a-key (group-key a-msg)
+          b-key (group-key b-msg)]
+      (if (nil? b-key)
 
-(defn consume-multipart [base candidate out-ch unpaired-frags]
-  (if (nil? candidate)
-    ;; Find match for base in unpaired set
-    (find-fragment-match out-ch (group-key (base "line")) (base "line") unpaired-frags)
-    (let [frag-num   (ais-ex/parse "frag-num" candidate)
-          frag-count (ais-ex/parse "frag-count" candidate)
-          candidate-group-key  (group-key candidate)
-          base-group-key (group-key (base "line"))]
-      (if (nil? candidate-group-key)
-        ;; Candidate message is not a multipart fragment.  Send candidate
-        ;; to out channel and find possible match for base in unpaired set.  
-        ;; If match cannot be found, add base to unpaired fragments.
-
+        ;; Msg b is not a multipart fragment.  Send to out channel for processing
+        ;; and find possible match for msg a in unpaired fragments.  If a match is
+        ;; not found, add to unpaired fragments
         (do
-          (println (format "candidate-group-key nil: %s %s" base-group-key candidate-group-key))
-          (async/>!! out-ch [candidate])
-          (find-fragment-match out-ch base-group-key (base "line") unpaired-frags)
-          (pprint/pprint @unpaired-frags))
+          (async/>!! out-ch [b-msg])
+          (find-fragment-match! out-ch a-key a-msg unpaired-frags))
 
-        ;; Candidate message is a multipart fragment.  Determine if candidate
-        ;; and base fragment are a pair.  If yes, send to out channel, otherwise
-        ;; find match for base in unpaired and add candidate to unpaired set. If
-        ;; match found, send pair to out channel otherwise add base to unpaired.
-
-        (if (= base-group-key candidate-group-key)
+        ;; Msg b is a multipart fragment; if grouping key matches msg a, send pair
+        ;; to out channel otherwise find possible matches for both msgs in unparied
+        ;; fragments.  Add msgs to unpaired fragments if matches not found.
+        (if (= a-key b-key)
+          (async/>!! out-ch (sort-by (partial ais-ex/parse "frag-num") [a-msg b-msg]))
           (do
-            (println (format "group key match: %s %s" base-group-key candidate-group-key))
-            (async/>!! out-ch (sort-by (partial ais-ex/parse "frag-num") [(base "line") candidate])))
-          (do
-            (println (format "group key doesn't match: %s %s" base-group-key candidate-group-key))
-            ;;(swap! unpaired-frags assoc candidate-group-key candidate)
-            (find-fragment-match out-ch candidate-group-key candidate unpaired-frags)
-            (find-fragment-match out-ch base-group-key (base "line") unpaired-frags)
-            (pprint/pprint @unpaired-frags)))
-      ))))
+            (find-fragment-match! out-ch b-key b-msg unpaired-frags)
+            (find-fragment-match! out-ch a-key a-msg unpaired-frags)))))))
 
 (defn passthru? [supported-types d]
   (or 
@@ -160,21 +152,13 @@
         (if-let [line (async/<!! in-ch)]
           (do 
             (when (valid-syntax? line)
-              (println (format "filter-stream: %s" line))
               (let [d (details line)]
-                ;; Fragment 2 of multipart messages should be automatically passed thru. 
                 (if (passthru? supported-types d)
 	          (condp = (d "frag-count")
-	            1 (do
-                        (println "Consume 1")
-			(println line)
-                        (async/>!! out-ch [line]))
-	            2 (do
-                        (println (format "Consume 2: %s" (group-key line)))
-			(println line)
-                        (consume-multipart d (async/<!! in-ch) out-ch unpaired-frags))
-	     	    (.println *err* (str "Unexpected fragment count: " (d "frag-count") ". " line)))
-	          (.println *err* (str "Dropping [type=" (d "type") "] " line)))))
+	            1 (async/>!! out-ch [line])
+	            2 (consume-multipart line (async/<!! in-ch) unpaired-frags out-ch)
+	     	    (.println *err* (str "Unexpected fragment count: " (d "frag-count") ". " line))) 
+	          (.println *err* (str "Dropping [type=" (d "type") "] " line))))) 
             (recur))
           (async/close! out-ch))))
     out-ch))
