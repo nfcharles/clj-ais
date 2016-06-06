@@ -264,7 +264,7 @@ Adding support for a new message type requires creating a new type specification
 - Optional metrics configuration (coarse/fine metrics)??
 - Better timing metrics??
 
-### testing
+### Testing
 - More unit tests
 - More integration tests
 
