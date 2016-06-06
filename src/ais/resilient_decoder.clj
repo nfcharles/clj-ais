@@ -46,19 +46,6 @@
 ;;;
 
 
-(comment
-(logging/merge-config!
-  {:appenders {
-    :spit (appenders/spit-appender {:fname "/tmp/ais-decoder.log"})
-    :println (appenders/println-appender {:stream :std-err})}})
-)
-
-(logging/merge-config!
-  {:appenders {
-    :println (appenders/println-appender {:stream :auto})}})
-
-
-
 (def buffer-size 1000) 
 (def ais-msg-types (into {} (for [k (range 1 28)] [k false])))
 
@@ -67,7 +54,7 @@
 ;; ---
 
 (defmulti write-data 
-  (fn [format & _] format))
+  (fn [output-format & _] output-format))
 
 (defmethod write-data "json" [_ writer data ]
   (.write writer (json/write-str data)))
@@ -78,11 +65,11 @@
 (defmethod write-data :default [_ writer data]
   (write-data "csv" writer data))
 
-(defn- write [name format lines]
-  (let [filename (str  name "." format)]
-    (logging/info (str "writing " filename))
+(defn- write [name output-format lines]
+  (let [filename (str  name "." output-format)]
+    (logging/info (format "writing %s" filename))
     (with-open [writer (clojure.java.io/writer filename)]
-      (write-data format writer lines))))
+      (write-data output-format writer lines))))
 
 ;;---
 ;; Util
@@ -161,19 +148,26 @@
   (let [out-ch (async/chan buffer-size)
         unpaired-frags (atom {})]
     (async/thread
-      (loop []
+      (loop [dropped 0
+             invalid 0]
         (if-let [line (async/<!! in-ch)]
-          (do 
-            (when (valid-syntax? line)
-              (let [d (details line)]
-                (if (passthru? supported-types d)
-	          (condp = (d "frag-count")
-	            1 (async/>!! out-ch [line])
-	            2 (consume-multipart line (async/<!! in-ch) unpaired-frags out-ch)
-                    (logging/warn (format "Unexpected fragment count: %d, %s" (d "frag-count") line)))
-                  (logging/warn (format "Dropping [type=%d] %s" (d "type") line)))))                  
-            (recur))
-          (async/close! out-ch))))
+          (if (valid-syntax? line)
+            (let [d (details line)]
+              (if (passthru? supported-types d)
+                (condp = (d "frag-count")
+                  1 (do (async/>!! out-ch [line]) (recur dropped invalid))
+                  2 (do (consume-multipart line (async/<!! in-ch) unpaired-frags out-ch) (recur dropped invalid))
+                  (do
+                    (logging/debug (format "Unexpected fragment count: %d, %s" (d "frag-count") line)))
+                    (recur dropped invalid))
+                (recur (inc dropped) invalid)))
+            (do
+              (logging/debug (format "Invalid syntax: %s" line))
+              (recur dropped (inc invalid))))
+          (do
+            (logging/info (format "count.dropped=%d" dropped))
+            (logging/info (format "count.invalid_syntax=%d" invalid))
+            (async/close! out-ch)))))
     out-ch))
 
 (defn- process [format n in-ch]
@@ -187,7 +181,7 @@
               (recur (conj acc decoded))
               (recur acc))
             (do
-              (logging/info (str "Thread-" i ": process.count=" (count acc)))
+              (logging/info (str "count.decoder.thread_" i "=" (count acc)))
               (async/>!! out-ch acc))))
         (swap! active-threads dec)
         (if (= @active-threads 0)
@@ -200,36 +194,42 @@
       (loop [acc []]
         (if-let [batch (async/<!! in-ch)]
           (do
-            (logging/info (str "collect.count=" (count batch)))
+            (logging/info (str "count.collector=" (count batch))) 
             (recur (conj acc batch)))
           (async/>!! out-ch acc))))
     out-ch))
 
-(defn- writer [format prefix batches]
+(defn- writer [output-format prefix batches]
   (let [out-ch (async/chan)
         n (count batches)
         active-threads (atom n)]
     (doseq [[i batch] (map list (range n) batches)]
       (async/thread
-        (write (str prefix "-part-" i) format batch)
-        (logging/info (str "Thread-" i ": write.count=" (count batch)))
+        (write (format "%s-part-%s" prefix i) output-format batch)
+        (logging/info (format "count.writer.thread_%s=%s" i (count batch)))
         (swap! active-threads dec)
         (when (= @active-threads 0)
           (async/>!! out-ch :done)
           (async/close! out-ch))))
     out-ch))
 
-(defn run [in-ch output-prefix supported-types nthreads format]
+(defn run [in-ch output-prefix supported-types nthreads output-format]
   (let [out-ch (->> (filter-stream supported-types in-ch)
-                    (process format nthreads)
+                    (process output-format nthreads)
                     (collect))]
     ;; Thread macro uses daemon threads so we must explicitly block 
     ;; until all writer threads are complete to prevent premature
     ;; termination of main thread.
-    (async/<!! (writer format output-prefix (async/<!! out-ch)))))
+    (async/<!! (writer output-format output-prefix (async/<!! out-ch)))))
 
 (def stdin-reader
   (java.io.BufferedReader. *in*))
+
+
+(defn configure-logging [log-stream]
+  (logging/merge-config!
+    {:appenders {
+      :println (appenders/println-appender {:stream log-stream})}}))
 
 (defn -main
   [& args]
@@ -237,9 +237,9 @@
     (let [output-prefix (nth args 0)
           supported-types (merge-types (parse-types (nth args 1)))
           nthreads (Integer. (nth args 2))
-          format (nth args 3)
+          output-format (nth args 3)
           stream (async/to-chan (line-seq stdin-reader))]
-          ;; TODO: configure logging
-          (time (run stream output-prefix supported-types nthreads format)))
+      (configure-logging :std-err)
+      (time (run stream output-prefix supported-types nthreads output-format)))
     (catch Exception e
       (logging/fatal e))))

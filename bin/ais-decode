@@ -98,4 +98,4 @@ java $JAVA_OPS -jar $RELEASE_JAR \
     $OUTPUT_NAME \
     $MESSAGE_TYPES \
     $THREADS \
-    $OUTPUT_FORMAT < $INPUT 2>/tmp/dropped.log
+    $OUTPUT_FORMAT < $INPUT
