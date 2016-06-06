@@ -263,6 +263,7 @@ Adding support for a new message type requires creating a new type specification
 - Configurable log-level
 - Optional metrics configuration (coarse/fine metrics)??
 - Better timing metrics??
+
 ### testing
 - More unit tests
 - More integration tests
