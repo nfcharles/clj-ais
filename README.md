@@ -78,13 +78,13 @@ MESSAGE_TYPES=1,2,3
 THREADS=2
 OUTPUT_FORMAT=json
 OUTPUT_NAME=out
-16-06-06 00:57:54 navil-ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIS,2015-11-04T08:30:02+00:00
-16-06-06 00:57:54 navil-ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: \s:rEV06,c:1446624765*58\!AIVDM,1,1,,B,14`Utdh01@m
-16-06-06 00:57:54 navil-ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: idAVMrhh;Va?T00S?,0*6F|10|1446625878.861585|2015-11-04T08:31:18.861Z
-16-06-06 00:57:54 navil-ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIE,2015-11-04T08:35:00+00:00
-16-06-06 00:57:54 navil-ubuntu INFO [ais.resilient_decoder:168] - count.dropped=3
-16-06-06 00:57:54 navil-ubuntu INFO [ais.resilient_decoder:169] - count.invalid_syntax=4
-16-06-06 00:57:54 navil-ubuntu ERROR [ais.resilient_decoder:145] - 
+16-06-06 00:57:54 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIS,2015-11-04T08:30:02+00:00
+16-06-06 00:57:54 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: \s:rEV06,c:1446624765*58\!AIVDM,1,1,,B,14`Utdh01@m
+16-06-06 00:57:54 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: idAVMrhh;Va?T00S?,0*6F|10|1446625878.861585|2015-11-04T08:31:18.861Z
+16-06-06 00:57:54 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIE,2015-11-04T08:35:00+00:00
+16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:168] - count.dropped=3
+16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:169] - count.invalid_syntax=4
+16-06-06 00:57:54 ubuntu ERROR [ais.resilient_decoder:145] - 
                               java.lang.Thread.run              Thread.java:  701
 java.util.concurrent.ThreadPoolExecutor$Worker.run  ThreadPoolExecutor.java:  615
  java.util.concurrent.ThreadPoolExecutor.runWorker  ThreadPoolExecutor.java: 1146
@@ -122,16 +122,16 @@ MESSAGE_TYPES=5
 THREADS=1
 OUTPUT_FORMAT=json
 OUTPUT_NAME=out
-16-06-06 01:03:25 navil-ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIS,2015-11-04T08:30:02+00:00
-16-06-06 01:03:25 navil-ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: \s:rEV06,c:1446624765*58\!AIVDM,1,1,,B,14`Utdh01@m
-16-06-06 01:03:25 navil-ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: idAVMrhh;Va?T00S?,0*6F|10|1446625878.861585|2015-11-04T08:31:18.861Z
-16-06-06 01:03:25 navil-ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIE,2015-11-04T08:35:00+00:00
-16-06-06 01:03:25 navil-ubuntu INFO [ais.resilient_decoder:168] - count.dropped=18
-16-06-06 01:03:25 navil-ubuntu INFO [ais.resilient_decoder:169] - count.invalid_syntax=4
-16-06-06 01:03:25 navil-ubuntu INFO [ais.resilient_decoder:184] - count.decoder.thread_0=3
-16-06-06 01:03:25 navil-ubuntu INFO [ais.resilient_decoder:197] - count.collector=3
-16-06-06 01:03:25 navil-ubuntu INFO [ais.resilient_decoder:70] - writing out-part-0.json
-16-06-06 01:03:25 navil-ubuntu INFO [ais.resilient_decoder:209] - count.writer.thread_0=3
+16-06-06 01:03:25 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIS,2015-11-04T08:30:02+00:00
+16-06-06 01:03:25 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: \s:rEV06,c:1446624765*58\!AIVDM,1,1,,B,14`Utdh01@m
+16-06-06 01:03:25 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: idAVMrhh;Va?T00S?,0*6F|10|1446625878.861585|2015-11-04T08:31:18.861Z
+16-06-06 01:03:25 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIE,2015-11-04T08:35:00+00:00
+16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:168] - count.dropped=18
+16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:169] - count.invalid_syntax=4
+16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:184] - count.decoder.thread_0=3
+16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:197] - count.collector=3
+16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:70] - writing out-part-0.json
+16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:209] - count.writer.thread_0=3
 "Elapsed time: 106.701369 msecs"
 ```
 
@@ -258,6 +258,11 @@ Adding support for a new message type requires creating a new type specification
 ```
 
 ## TODO
+### App
+- Use ISO timestamps in logging
+- Configurable log-level
+- Optional metrics configuration (coarse/fine metrics)??
+- Better timing metrics??
 ### testing
 - More unit tests
 - More integration tests
