@@ -146,11 +146,11 @@
           (recur (rest pairs) result)))
       result)))
       
-(defn send-multipart [frag-groups unpaired-frags out-ch]
+(defn parse-multipart [frag-groups unpaired-frags]
   (if-let [frag-set (assemble-multipart frag-groups)]
-    (async/>!! out-ch frag-set)
-    (doseq [match (find-matches! frag-groups unpaired-frags)]
-      (async/>!! out-ch match))))
+    (list frag-set)
+    (for [match (find-matches! frag-groups unpaired-frags)]
+      match)))
 
 (defn passthru? [supported-types m]
   (or 
@@ -178,12 +178,12 @@
                   (if (nil? (group-key line)) 
                     (recur (inc dropped) invalid) ; untagged multipart fragment -- can't deterministically group
                     (let [lines (conj (consume (- (m "frag-count") 1) in-ch) line)
-                          all-groups (group-fragments lines)
-                          frag-groups (dissoc all-groups :drop :send)]
-                      (doseq [msg (all-groups :send)]
+                          groups (group-fragments lines)]
+                      (doseq [msg (groups :send)]
                         (async/>!! out-ch [msg]))
-                      (send-multipart frag-groups unpaired-frags out-ch)
-                      (recur (+ dropped (count (all-groups :drop))) invalid))))
+                      (doseq [msg (parse-multipart (dissoc groups :drop :send) unpaired-frags)]
+                        (async/>!! out-ch msg))
+                      (recur (+ dropped (count (groups :drop))) invalid))))
                 (recur (inc dropped) invalid)))
             (do
               (logging/debug (format "Invalid message syntax: %s" line))
