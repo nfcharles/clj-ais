@@ -54,11 +54,11 @@
  "frag-num"   { :exp #"AIVD[MO],\d,(\d)"                                     :fn #(ext %1 %2) }
  "frag-info"  { :exp #"AIVD[MO],(\d),(\d)"                                   :fn #(ext-multi %1 %2) }
  "seq-id"     { :exp #"AIVD[MO],\d,\d,(\d?)"                                 :fn #(ext-raw %1 %2) }
- "radio-ch"   { :exp #"AIVD[MO],\d,\d,\d?,([AB]?)"                           :fn #(ext-raw %1 %2) }
- "payload"    { :exp #"AIVD[MO],\d,\d,\d?,[AB]?,(.+),"                       :fn #(ext-raw %1 %2) }
- "fill-bits"  { :exp #"AIVD[MO],\d,\d,\d?,[AB]?,.+,(\d)"                     :fn #(ext %1 %2) }
- "checksum"   { :exp #"AIVD[MO],\d,\d,\d?,[AB]?,.+,\d\*([A-F0-9][A-F0-9])"   :fn #(ext-raw %1 %2) }
- "env-chksum" { :exp #"(AIVD[MO],\d,\d,\d?,[AB]?,.+,\d)\*([A-Z0-9][A-Z0-9])" :fn #(ext-multi-raw %1 %2) } ))
+ "radio-ch"   { :exp #"AIVD[MO],\d,\d,\d?,([AB12]?)"                           :fn #(ext-raw %1 %2) }
+ "payload"    { :exp #"AIVD[MO],\d,\d,\d?,[AB12]?,(.+),"                       :fn #(ext-raw %1 %2) }
+ "fill-bits"  { :exp #"AIVD[MO],\d,\d,\d?,[AB12]?,.+,(\d)"                     :fn #(ext %1 %2) }
+ "checksum"   { :exp #"AIVD[MO],\d,\d,\d?,[AB12]?,.+,\d\*([A-F0-9][A-F0-9])"   :fn #(ext-raw %1 %2) }
+ "env-chksum" { :exp #"(AIVD[MO],\d,\d,\d?,[AB12]?,.+,\d)\*([A-Z0-9][A-Z0-9])" :fn #(ext-multi-raw %1 %2) } ))
 
 (defn parse [field msg]
   (let [ex (-extractors field)]
