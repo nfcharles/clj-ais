@@ -118,13 +118,16 @@
       acc)))
 
 (defn assemble-multipart [frag-groups]
+  ;; Return complete multipart message if possible, sorted by fragment number
   (if (= 1 (count frag-groups))
     (let [frags (first (vals frag-groups))]
       (if (and (not-any? nil? frags) 
                (= (ais-ex/parse "frag-count" (first frags)) (count frags)))
         (sort-by (partial ais-ex/parse "frag-num") frags)))))
 
-(defn find-match! [frag-groups unpaired-frags]
+(defn find-matches! [frag-groups unpaired-frags]
+  ;; For input (frag-group-key, [frag-1 .. frag-n]) tuple, look up remaining group members
+  ;; in unpaired frags.  If set complete, sort fragments and add to result set.
   (loop [pairs (seq frag-groups)
          result []]
     (if-let [[grp-k frags] (first pairs)]
@@ -132,7 +135,9 @@
         (let [n (ais-ex/parse "frag-count" (first unpaired-ret))]
           ;; |frags| + |unpaired-ret| == n --> complete fragment set
           (if (= (+ (count unpaired-ret) (count frags)) n)
-            (recur (rest pairs) (conj result (sort-by (partial ais-ex/parse "frag-num") (concat frags unpaired-ret))))
+            (do
+              (swap! unpaired-frags dissoc grp-k) ; fragment set complete, remove key
+              (recur (rest pairs) (conj result (sort-by (partial ais-ex/parse "frag-num") (concat frags unpaired-ret)))))
             (do
               (swap! unpaired-frags update grp-k concat frags)
               (recur (rest pairs) result))))
@@ -144,9 +149,7 @@
 (defn send-multipart [frag-groups unpaired-frags out-ch]
   (if-let [frag-set (assemble-multipart frag-groups)]
     (async/>!! out-ch frag-set)
-    ;; foreach frag key, search for matching frags in unpaired-frags.  If match completes set,
-    ;; send, otherwise persist
-    (doseq [match (find-match! frag-groups unpaired-frags)]
+    (doseq [match (find-matches! frag-groups unpaired-frags)]
       (async/>!! out-ch match))))
 
 (defn passthru? [supported-types m]
