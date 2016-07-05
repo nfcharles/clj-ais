@@ -1,6 +1,8 @@
 # clj-ais
 
-clj-ais is a library for decoding AIS (Automatic Identification System) messages.  It was designed with reference to the following document http://catb.org/gpsd/AIVDM.html and tested against the following online decoder -- which support a subset of message types -- http://rl.se/aivdm.  Also, integration tests were performed against http://fossies.org/linux/gpsd/test/sample.aivdm, which contains an comprehensive list of AIS messages and their decoded values.
+clj-ais is a library for decoding AIS (Automatic Identification System) messages - reference (http://catb.org/gpsd/AIVDM.html). The following were used as testing sources
+ - http://rl.se/aivdm. 
+ - http://fossies.org/linux/gpsd/test/sample.aivdm
 
 
 #### Supported Types
@@ -32,7 +34,7 @@ The library jars are built in ```clj-ais/target/uberjar/```.
 
 ## Usage
 
-The library contains an entrypoint for an example decoding app.  This can be invoked via `bin/ais-decode`
+The library contains an entrypoint for an example decoding application.  This can be invoked via `bin/ais-decode`
 
 
 ```bash
@@ -72,7 +74,7 @@ Required:
 
 ```bash
 JAVA_OPTS=-Xms2048m -Xmx4096m
-RELEASE_JAR=target/uberjar/ais-0.8.1-SNAPSHOT-standalone.jar
+RELEASE_JAR=target/uberjar/ais-0.8.2-SNAPSHOT-standalone.jar
 INPUT=sample-messages.txt
 MESSAGE_TYPES=1,2,3
 THREADS=2
@@ -116,7 +118,7 @@ ais.exceptions.ChecksumVerificationException: CHKSUM(AIVDM,1,1,,B,35Msq4PPA1FH1W
 
 ```bash
 JAVA_OPTS=-Xms2048m -Xmx4096m
-RELEASE_JAR=target/uberjar/ais-0.8.1-SNAPSHOT-standalone.jar
+RELEASE_JAR=target/uberjar/ais-0.8.2-SNAPSHOT-standalone.jar
 INPUT=sample-messages.txt
 MESSAGE_TYPES=5
 THREADS=1
@@ -263,6 +265,7 @@ Adding support for a new message type requires creating a new type specification
 - Configurable log-level
 - Optional metrics configuration (coarse/fine metrics)??
 - Better timing metrics??
+- Decouple lib and app.  Create new repo for ais decoding project and tools.
 
 ### Testing
 - More unit tests

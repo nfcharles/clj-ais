@@ -12,14 +12,14 @@
   (:require [taoensso.timbre.appenders.core :as appenders])
   (:gen-class))
 
-;;;                      ____                     _           
-;;;                     |  _ \  ___  ___ ___   __| | ___ _ __ 
-;;;                     | | | |/ _ \/ __/ _ \ / _` |/ _ \ '__|
-;;;                     | |_| |  __/ (_| (_) | (_| |  __/ |   
-;;;                     |____/ \___|\___\___/ \__,_|\___|_|   
+;;;                           ____                     _           
+;;;                          |  _ \  ___  ___ ___   __| | ___ _ __ 
+;;;                          | | | |/ _ \/ __/ _ \ / _` |/ _ \ '__|
+;;;                          | |_| |  __/ (_| (_) | (_| |  __/ |   
+;;;                          |____/ \___|\___\___/ \__,_|\___|_|   
 ;;;
 ;;; The following application is a robust implemenation of ais-lib's core decoding functionality.  In practice, multipart 
-;;; messages tend to stream in correct monotonically increasing order however we must account for all streaming configurations
+;;; messages tend to stream in correct monotonically increasing order however we must account for all streaming permutations
 ;;; and not naively consume input streams.
 ;;; 
 ;;; Consider two sets or multipart messages, [a, a'] and [b, b']. x+ denotes 1 more messages.
@@ -65,11 +65,9 @@
 (defmethod write-data :default [_ writer data]
   (write-data "csv" writer data))
 
-(defn- write [name output-format lines]
-  (let [filename (str  name "." output-format)]
-    (logging/info (format "writing %s" filename))
-    (with-open [writer (clojure.java.io/writer filename)]
-      (write-data output-format writer lines))))
+(defn- write [filename output-format lines]
+  (with-open [writer (clojure.java.io/writer filename)]
+    (write-data output-format writer lines)))
 
 ;;---
 ;; Util
@@ -93,7 +91,10 @@
 ;; Core
 ;;---
 
-(defn details [line]
+(defn consume [n in-ch]
+  (repeatedly n #(async/<!! in-ch)))
+
+(defn meta-fields [line]
   (hash-map
     "frag-count" (ais-ex/parse "frag-count" line)
     "frag-num"   (ais-ex/parse "frag-num" line)
@@ -104,45 +105,58 @@
     (let [key (format "%s-%s" prefix (ais-ex/parse "radio-ch" line))]
       key)))
 
-(defn find-fragment-match! [out-ch group-key msg unpaired-frags]
-  (if-let [frag-match (@unpaired-frags group-key)]
-    (async/>!! out-ch (sort-by (partial ais-ex/parse "frag-num") [msg frag-match]))
-    (swap! unpaired-frags assoc group-key msg)))
+(defn group-fragments [lines]
+  (loop [acc {:send [] :drop []}
+         msgs lines]
+    (if-let [msg (first msgs)]
+      (let [key (group-key msg)]
+        (if (nil? key)
+          (if (> (ais-ex/parse "frag-count" msg) 1)
+            (recur (update acc :drop conj msg) (rest msgs))   ; Drop untagged multipart fragments
+            (recur (update acc :send conj msg) (rest msgs)))  ; Send single messages
+          (recur (update acc key conj msg) (rest msgs))))     ; Update grouping
+      acc)))
 
-(defn consume-multipart [a-msg b-msg unpaired-frags out-ch]
-  (if (nil? b-msg)
-    ;; Clearly msg b is not a match, let's look up a possible match in unpaired fragments
-    (find-fragment-match! out-ch (group-key a-msg) a-msg unpaired-frags)
-    (let [a-key (group-key a-msg)
-          b-key (group-key b-msg)]
-      (if (nil? b-key)
+(defn assemble-multipart [frag-groups]
+  (if (= 1 (count frag-groups))
+    (let [frags (first (vals frag-groups))]
+      (if (and (not-any? nil? frags) 
+               (= (ais-ex/parse "frag-count" (first frags)) (count frags)))
+        (sort-by (partial ais-ex/parse "frag-num") frags)))))
 
-        ;; Msg b is not a multipart fragment.  Send to out channel for processing
-        ;; and find possible match for msg a in unpaired fragments.  If a match is
-        ;; not found, add to unpaired fragments
+(defn find-match! [frag-groups unpaired-frags]
+  (loop [pairs (seq frag-groups)
+         result []]
+    (if-let [[grp-k frags] (first pairs)]
+      (if-let [unpaired-ret (@unpaired-frags grp-k)]
+        (let [n (ais-ex/parse "frag-count" (first unpaired-ret))]
+          ;; |frags| + |unpaired-ret| == n --> complete fragment set
+          (if (= (+ (count unpaired-ret) (count frags)) n)
+            (recur (rest pairs) (conj result (sort-by (partial ais-ex/parse "frag-num") (concat frags unpaired-ret))))
+            (do
+              (swap! unpaired-frags update grp-k concat frags)
+              (recur (rest pairs) result))))
         (do
-          (async/>!! out-ch [b-msg])
-          (find-fragment-match! out-ch a-key a-msg unpaired-frags))
+          (swap! unpaired-frags update grp-k concat frags)
+          (recur (rest pairs) result)))
+      result)))
+      
+(defn send-multipart [frag-groups unpaired-frags out-ch]
+  (if-let [frag-set (assemble-multipart frag-groups)]
+    (async/>!! out-ch frag-set)
+    ;; foreach frag key, search for matching frags in unpaired-frags.  If match completes set,
+    ;; send, otherwise persist
+    (doseq [match (find-match! frag-groups unpaired-frags)]
+      (async/>!! out-ch match))))
 
-        ;; Msg b is a multipart fragment; if grouping key matches msg a, send pair
-        ;; to out channel otherwise find possible matches for both msgs in unparied
-        ;; fragments.  Add msgs to unpaired fragments if matches not found.
-        (if (= a-key b-key)
-          (async/>!! out-ch (sort-by (partial ais-ex/parse "frag-num") [a-msg b-msg]))
-          (do
-            (find-fragment-match! out-ch b-key b-msg unpaired-frags)
-            (find-fragment-match! out-ch a-key a-msg unpaired-frags)))))))
-
-(defn passthru? [supported-types d]
+(defn passthru? [supported-types m]
   (or 
-    (supported-types (d "type"))
-    (and (= (d "frag-num") 2) (= (d "frag-count") 2))))
+    (supported-types (m "type"))
+    (and (> (m "frag-num") 1) (> (m "frag-count") 1))))
 
-(defn decode [format & msgs]
-  (try
-    (apply ais-core/parse-ais format (apply ais-core/verify msgs))
-    (catch Exception e
-      (logging/error e))))
+(defn log-metrics [dropped invalid]
+  (logging/info (format "count.invalid.total=%d" invalid))
+  (logging/info (format "count.dropped.total=%d" dropped)))
 
 (defn- filter-stream [supported-types in-ch]
   (let [out-ch (async/chan buffer-size)
@@ -152,23 +166,35 @@
              invalid 0]
         (if-let [line (async/<!! in-ch)]
           (if (valid-syntax? line)
-            (let [d (details line)]
-              (if (passthru? supported-types d)
-                (condp = (d "frag-count")
-                  1 (do (async/>!! out-ch [line]) (recur dropped invalid))
-                  2 (do (consume-multipart line (async/<!! in-ch) unpaired-frags out-ch) (recur dropped invalid))
+            (let [m (meta-fields line)]
+              (if (passthru? supported-types m)
+                (if (= (m "frag-count") 1)
                   (do
-                    (logging/debug (format "Unexpected fragment count: %d, %s" (d "frag-count") line)))
+                    (async/>!! out-ch [line])
                     (recur dropped invalid))
+                  (if (nil? (group-key line)) 
+                    (recur (inc dropped) invalid) ; untagged multipart fragment -- can't deterministically group
+                    (let [lines (conj (consume (- (m "frag-count") 1) in-ch) line)
+                          all-groups (group-fragments lines)
+                          frag-groups (dissoc all-groups :drop :send)]
+                      (doseq [msg (all-groups :send)]
+                        (async/>!! out-ch [msg]))
+                      (send-multipart frag-groups unpaired-frags out-ch)
+                      (recur (+ dropped (count (all-groups :drop))) invalid))))
                 (recur (inc dropped) invalid)))
             (do
-              (logging/debug (format "Invalid syntax: %s" line))
+              (logging/debug (format "Invalid message syntax: %s" line))
               (recur dropped (inc invalid))))
           (do
-            (logging/info (format "count.dropped=%d" dropped))
-            (logging/info (format "count.invalid_syntax=%d" invalid))
+            (log-metrics dropped invalid)
             (async/close! out-ch)))))
     out-ch))
+
+(defn decode [format & msgs]
+  (try
+    (apply ais-core/parse-ais format (apply ais-core/verify msgs))
+    (catch Exception e
+      (logging/error e))))
 
 (defn- process [format n in-ch]
   (let [out-ch (async/chan buffer-size)
@@ -202,10 +228,12 @@
 (defn- writer [output-format prefix batches]
   (let [out-ch (async/chan)
         n (count batches)
-        active-threads (atom n)]
+        active-threads (atom n)
+        filename #(format "%s-part-%s.%s" %1 %2 %3)]
     (doseq [[i batch] (map list (range n) batches)]
       (async/thread
-        (write (format "%s-part-%s" prefix i) output-format batch)
+        (logging/info (format "writing %s" (filename prefix i output-format)))
+        (write (filename prefix i output-format) output-format batch)
         (logging/info (format "count.writer.thread_%s=%s" i (count batch)))
         (swap! active-threads dec)
         (when (= @active-threads 0)
@@ -230,6 +258,10 @@
   (logging/merge-config!
     {:appenders {
       :println (appenders/println-appender {:stream log-stream})}}))
+
+
+;; TODO: "strict"    : "g" tags necessary for multipart messages
+;;       "nonstrict" : non tagged multipart messages are assumed to stream sequentially
 
 (defn -main
   [& args]

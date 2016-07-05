@@ -1,19 +1,11 @@
 (ns ais.core
   (:require [clojure.data.json :as json])
-  (:require [ais.extractors  :as ais-ex])
-  (:require [ais.mappings  :as ais-mappings])
+  (:require [ais.extractors :as ais-ex])
+  (:require [ais.mappings :as ais-mappings])
   (:require [ais.types :as ais-types])
   (:require [ais.util :as ais-util])
   (:require [ais.exceptions :refer :all])
   (:gen-class))
-
-
-;       _  _             _     
-;   ___| |(_)       __ _(_)___ 
-;  / __| || |_____ / _` | / __|
-; | (__| || |_____| (_| | \__ \
-;  \___|_|/ |      \__,_|_|___/
-              
 
 
 ; message:   entire transmission
@@ -96,19 +88,12 @@
                            collector                                            ; accumulator function
                            bits)))                                              ; raw binary payload
 
-(defn parse-ais
-  ([data-format msg]
+(defn parse-ais [data-format msg & frags]
+  (let [all (conj frags msg)]
     (parse data-format
            (ais-ex/parse "tags" msg)
-           (ais-ex/parse "payload" msg)
-           (ais-ex/parse "fill-bits" msg)))
-  ([data-format msg-a msg-b]
-    (parse data-format
-           (ais-ex/parse "tags" msg-a)
-           (str 
-            (ais-ex/parse "payload" msg-a)
-            (ais-ex/parse "payload" msg-b))
-           (ais-ex/parse "fill-bits" msg-b))))
+           (reduce str (map (partial ais-ex/parse "payload") all))
+           (ais-ex/parse "fill-bits" (last all)))))
 
 (defn verify [& in-msgs]
   (loop [msgs in-msgs
@@ -118,7 +103,7 @@
         (if (not-any? nil? [env chksum])
           (if (= (ais-util/checksum env) chksum)
             (recur (rest msgs) (conj verified msg))
-            (throw (ais.exceptions.ChecksumVerificationException. (str "CHKSUM(" env ") != " chksum ", == " (ais-util/checksum env)))))
+             (throw (ais.exceptions.ChecksumVerificationException. (format "CHKSUM(%s) != %s, == %s" env chksum (ais-util/checksum env)))))
           (throw (ais.exceptions.MessageFormatException. (str "Failed parsing (env, chksum) from " msg)))))
       verified)))
 
