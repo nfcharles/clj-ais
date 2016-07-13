@@ -36,7 +36,7 @@
 ;;; Entry point parameters:
 ;;;  * output-prefix: string
 ;;;    - Output filename prefix
-;;;  * supported-types: [1-28]
+;;;  * include-types: [1-28]
 ;;;    - Messages types to decode.  All other messages are dropped
 ;;;  * n-threads: [1..)
 ;;;    - Number of processing threads.  Also sets the number of output files (where output files have the suffix
@@ -47,7 +47,6 @@
 
 
 (def buffer-size 1000) 
-(def ais-msg-types (into {} (for [k (range 1 28)] [k false])))
 
 ;;---
 ;; Writers
@@ -72,62 +71,62 @@
 ;;---
 ;; Util
 ;;--
-
-(defn- merge-types [types]
-  (apply merge ais-msg-types types))
-
+  
 (defn- parse-types [types]
-  (into {} (for [k (clojure.string/split types #",")] [(read-string k) true])))
+  (into #{} (map read-string (clojure.string/split types #","))))
 
 (defn- extract-type [payload]
   (->> (seq payload)
        (first)
        (ais-util/char->decimal)))
 
-(defn valid-syntax? [message]
+(defn- valid-syntax? [message]
   (== (count (ais-ex/parse "env-chksum" message)) 2))
+
+(defn- m_type [line]
+  (extract-type (ais-ex/parse "payload" line)))
+
+(defn- m_fc [line]
+  (ais-ex/parse "frag-count" line))
+
+(defn- m_fn [line]
+  (ais-ex/parse "frag-num" line))  
+
+
 
 ;;---
 ;; Core
 ;;---
 
-(defn consume [n in-ch]
-  (repeatedly n #(async/<!! in-ch)))
+; filter nils
+(defn- consume [n in-ch]
+  (filter valid-syntax? (take-while ais-util/not-nil? (repeatedly n #(async/<!! in-ch)))))
 
-(defn meta-fields [line]
-  (hash-map
-    "frag-count" (ais-ex/parse "frag-count" line)
-    "frag-num"   (ais-ex/parse "frag-num" line)
-    "type"       (extract-type (ais-ex/parse "payload" line))))
-
-(defn group-key [line]
+(defn- group-key [line]
   (if-let  [prefix (ais-ex/parse "g" line)]
     (let [key (format "%s-%s" prefix (ais-ex/parse "radio-ch" line))]
       key)))
 
-(defn group-fragments [lines]
-  (loop [acc {:send [] :drop []}
+(defn- group-fragments 
+  "Groups fragments into at least 2 categories:
+  
+    :single   : single message
+    :notag    : multipart message fragments with no tag block
+    (grp-key) : tagged multipart message fragments
+  "
+  [lines]
+  (loop [acc {:single [] :notag []}
          msgs lines]
     (if-let [msg (first msgs)]
-      (let [key (group-key msg)]
-        (if (nil? key)
-          (if (> (ais-ex/parse "frag-count" msg) 1)
-            (recur (update acc :drop conj msg) (rest msgs))   ; Drop untagged multipart fragments
-            (recur (update acc :send conj msg) (rest msgs)))  ; Send single messages
-          (recur (update acc key conj msg) (rest msgs))))     ; Update grouping
+      (if-let [key (group-key msg)]
+        (recur (update acc key conj msg) (rest msgs))
+        (recur (update acc (if (= (m_fc msg) 1) :single :notag) conj msg) (rest msgs)))
       acc)))
 
-(defn assemble-multipart [frag-groups]
-  ;; Return complete multipart message if possible, sorted by fragment number
-  (if (= 1 (count frag-groups))
-    (let [frags (first (vals frag-groups))]
-      (if (and (not-any? nil? frags) 
-               (= (ais-ex/parse "frag-count" (first frags)) (count frags)))
-        (sort-by (partial ais-ex/parse "frag-num") frags)))))
-
-(defn find-matches! [frag-groups unpaired-frags]
-  ;; For input (frag-group-key, [frag-1 .. frag-n]) tuple, look up remaining group members
-  ;; in unpaired frags.  If set complete, sort fragments and add to result set.
+(defn- find-matches!
+  "For input (frag-group-key, [frag-1 .. frag-n]) tuple, look up remaining group members
+  in unpaired frags.  If set complete, sort fragments and add to result set."
+  [frag-groups unpaired-frags]
   (loop [pairs (seq frag-groups)
          result []]
     (if-let [[grp-k frags] (first pairs)]
@@ -145,58 +144,117 @@
           (swap! unpaired-frags update grp-k concat frags)
           (recur (rest pairs) result)))
       result)))
+          
+(defn- assemble-multipart 
+  "Returns a complete multipart message if possible, sorted by fragment number ASC,
+  nil otherwise."
+  [frag-groups]
+  (if (= 1 (count frag-groups))
+    (let [frags (first (vals frag-groups))]
+      (if (and (not-any? nil? frags) 
+               (= (m_fc (first frags)) (count frags)))
+        (sort-by m_fn frags)))))
+
+(defn complete-multipart? 
+  "Determines if an input sequence of message fragments is monotonic -- using fragment
+  numbers as indicies.  If this is true and the sequence cardinality matches n, it connotes 
+  the sequence is a complete multipart message.  Useful if sequence doesn't have group tags.  
+  Determining set membership is trivial when fragments have group tags, e.g 'g-1-2-5, g-2-2-5'."
+  [n msgs]
+  (and 
+    (= (map m_fn msgs) (range 1 (inc (count msgs))))
+    (= (map m_fc msgs) (repeat (count msgs) n))))
       
-(defn parse-multipart [frag-groups unpaired-frags]
+(defn- parse-multipart [frag-groups unpaired-frags]
   (if-let [frag-set (assemble-multipart frag-groups)]
     (list frag-set)
     (for [match (find-matches! frag-groups unpaired-frags)]
       match)))
 
-(defn passthru? [supported-types m]
-  (or 
-    (supported-types (m "type"))
-    (and (> (m "frag-num") 1) (> (m "frag-count") 1))))
+(defn- _decode? [include-types line]
+  (if (= (m_fn line) 1)
+    (contains? include-types (m_type line)) true))
 
-(defn log-metrics [dropped invalid]
+(defn- preprocess-multipart [line include-types unpaired-frags in-ch out-ch]
+  (let [remaining (filter (partial _decode? include-types) (consume (- (m_fc line) 1) in-ch))
+        lines (conj remaining line)
+        groups (group-fragments lines)]
+    (doseq [msg (groups :single)]
+      ;; Send along any single messages that are interspersed in multipart fragments --
+      ;; possible via fragment reordering.
+      (async/>!! out-ch [msg]))
+    (let [notag (groups :notag)]
+      (if-let [frag (first notag)]
+        ;; Assumption: multipart fragments are either tagged or untagged and not both.
+        (if (and (> (count notag) 0) (complete-multipart? (m_fc frag) notag) (contains? include-types (m_type frag)))
+          (do
+            (async/>!! out-ch notag)
+            {:notag []})
+          {:notag notag})
+        (do
+          (doseq [msg (parse-multipart (dissoc groups :notag :single) unpaired-frags)]
+            ;; We can't verify multipart message types until entire message is constructed.
+            ;; Only propagate multiparts in include list
+            (if (contains? include-types (m_type (first msg)))
+              (async/>!! out-ch msg)))
+          {:notag notag})))))
+
+(defn- log-metrics [dropped invalid]
   (logging/info (format "count.invalid.total=%d" invalid))
   (logging/info (format "count.dropped.total=%d" dropped)))
 
-(defn- filter-stream [supported-types in-ch]
+;;;
+;;; --- PROCESS PIPELINE FUNCTIONS
+;;;
+;;; (1) filter-stream
+;;;   Preprocesses input stream of messages, forwarding only messages specified in include-types.
+;;;   Multipart message fragments are appropriately assembled.  Incomplete messages are dropped.
+;;;
+;;;   TODO: Collect unmatched multipart fragments and write to disk.
+;;;  
+;;; (2) process
+;;;   Decodes messages -- single and multipart.
+;;;
+;;; (3) collect
+;;;   Accumulates decoded messages and prepares for writing.
+;;;
+;;; (4) writer
+;;;   Writes decoded messages to disk.
+;;;
+
+(defn- filter-stream [include-types in-ch]
   (let [out-ch (async/chan buffer-size)
+        decode? (partial _decode? include-types)
         unpaired-frags (atom {})]
     (async/thread
       (loop [dropped 0
              invalid 0]
         (if-let [line (async/<!! in-ch)]
-          (if (valid-syntax? line)
-            (let [m (meta-fields line)]
-              (if (passthru? supported-types m)
-                (if (= (m "frag-count") 1)
+          (if (valid-syntax? line) 
+            (if (decode? line)
+              (if (= (m_fn line) 1) ; start message (single | multipart)
+                (if (= (m_fc line) 1)       
                   (do
                     (async/>!! out-ch [line])
                     (recur dropped invalid))
-                  (if (nil? (group-key line)) 
-                    (recur (inc dropped) invalid) ; untagged multipart fragment -- can't deterministically group
-                    (let [lines (conj (consume (- (m "frag-count") 1) in-ch) line)
-                          groups (group-fragments lines)]
-                      (doseq [msg (groups :send)]
-                        (async/>!! out-ch [msg]))
-                      (doseq [msg (parse-multipart (dissoc groups :drop :send) unpaired-frags)]
-                        (async/>!! out-ch msg))
-                      (recur (+ dropped (count (groups :drop))) invalid))))
-                (recur (inc dropped) invalid)))
+                  (let [groups (preprocess-multipart line include-types unpaired-frags in-ch out-ch)]
+                    (recur (+ dropped (count (groups :notag))) invalid)))
+                (let [groups (preprocess-multipart line include-types unpaired-frags in-ch out-ch)]
+                  (recur (+ dropped (count (groups :notag))) invalid)))
+              (recur (inc dropped) invalid))
             (do
               (logging/debug (format "Invalid message syntax: %s" line))
               (recur dropped (inc invalid))))
           (do
             (log-metrics dropped invalid)
             (async/close! out-ch)))))
-    out-ch))
+    out-ch)) 
 
-(defn decode [format & msgs]
+(defn- decode [format & msgs]
   (try
     (apply ais-core/parse-ais format (apply ais-core/verify msgs))
     (catch Exception e
+      (pprint/pprint msgs)
       (logging/error e))))
 
 (defn- process [format n in-ch]
@@ -244,8 +302,8 @@
           (async/close! out-ch))))
     out-ch))
 
-(defn run [in-ch output-prefix supported-types nthreads output-format]
-  (let [out-ch (->> (filter-stream supported-types in-ch)
+(defn run [in-ch output-prefix include-types nthreads output-format]
+  (let [out-ch (->> (filter-stream include-types in-ch)
                     (process output-format nthreads)
                     (collect))]
     ;; Thread macro uses daemon threads so we must explicitly block 
@@ -262,19 +320,16 @@
     {:appenders {
       :println (appenders/println-appender {:stream log-stream})}}))
 
-
-;; TODO: "strict"    : "g" tags necessary for multipart messages
-;;       "nonstrict" : non tagged multipart messages are assumed to stream sequentially
-
 (defn -main
   [& args]
   (try
     (let [output-prefix (nth args 0)
-          supported-types (merge-types (parse-types (nth args 1)))
+          include-types (parse-types (nth args 1))
           nthreads (Integer. (nth args 2))
           output-format (nth args 3)
           stream (async/to-chan (line-seq stdin-reader))]
+      (println (format "INCLUDE TYPES: %s" include-types))
       (configure-logging :std-err)
-      (time (run stream output-prefix supported-types nthreads output-format)))
+      (time (run stream output-prefix include-types nthreads output-format)))
     (catch Exception e
       (logging/fatal e))))

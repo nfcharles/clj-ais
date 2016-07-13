@@ -2,6 +2,8 @@
   (:require [clojure.string :as string])
   (:gen-class))
 
+(def not-nil? (complement nil?))
+
 (defn timestamp->iso 
   ([tstamp format]
     (->> (java.util.Date. tstamp)

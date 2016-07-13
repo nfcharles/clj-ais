@@ -1,7 +1,7 @@
 (ns ais.core
   (:require [clojure.data.json :as json])
   (:require [ais.extractors :as ais-ex])
-  (:require [ais.mappings :as ais-mappings])
+  (:require [ais.mapping.core :as ais-mappings])
   (:require [ais.types :as ais-types])
   (:require [ais.util :as ais-util])
   (:require [ais.exceptions :refer :all])
