@@ -93,7 +93,6 @@
   (ais-ex/parse "frag-num" line))  
 
 
-
 ;;---
 ;; Core
 ;;---
@@ -131,12 +130,11 @@
          result []]
     (if-let [[grp-k frags] (first pairs)]
       (if-let [unpaired-ret (@unpaired-frags grp-k)]
-        (let [n (ais-ex/parse "frag-count" (first unpaired-ret))]
-          ;; |frags| + |unpaired-ret| == n --> complete fragment set
-          (if (= (+ (count unpaired-ret) (count frags)) n)
+        (let [n (m_fc (first unpaired-ret))]
+          (if (= (+ (count unpaired-ret) (count frags)) n) ; all fragments present => match
             (do
               (swap! unpaired-frags dissoc grp-k) ; fragment set complete, remove key
-              (recur (rest pairs) (conj result (sort-by (partial ais-ex/parse "frag-num") (concat frags unpaired-ret)))))
+              (recur (rest pairs) (conj result (sort-by m_fn (concat frags unpaired-ret)))))
             (do
               (swap! unpaired-frags update grp-k concat frags)
               (recur (rest pairs) result))))
@@ -178,26 +176,26 @@
 (defn- preprocess-multipart [line include-types unpaired-frags in-ch out-ch]
   (let [remaining (filter (partial _decode? include-types) (consume (- (m_fc line) 1) in-ch))
         lines (conj remaining line)
-        groups (group-fragments lines)]
-    (doseq [msg (groups :single)]
-      ;; Send along any single messages that are interspersed in multipart fragments --
-      ;; possible via fragment reordering.
+        groups (group-fragments lines)
+        notag (groups :notag)]
+    (doseq [msg (groups :single)] ; frag reordering can mix single msgs in multipart sequence
       (async/>!! out-ch [msg]))
-    (let [notag (groups :notag)]
-      (if-let [frag (first notag)]
-        ;; Assumption: multipart fragments are either tagged or untagged and not both.
-        (if (and (> (count notag) 0) (complete-multipart? (m_fc frag) notag) (contains? include-types (m_type frag)))
-          (do
-            (async/>!! out-ch notag)
-            {:notag []})
-          {:notag notag})
+    (if-let [frag (first notag)]
+      ;; ASSUMPTION: multipart fragments are either tagged or untagged and not both in an input stream.
+      ;; In either case, determine if input fragment sequence forms a complete message.  In tagged
+      ;; case, we can search for unmatched fragments in cache to form complete message.  In untagged
+      ;; case, no searches can be done; As such, if current fragment sequence doesn't form a complete
+      ;; message they cannot be used as possible matches for subsequent fragment sequences.
+      (if (and (> (count notag) 0) (complete-multipart? (m_fc frag) notag) (contains? include-types (m_type frag)))
         (do
-          (doseq [msg (parse-multipart (dissoc groups :notag :single) unpaired-frags)]
-            ;; We can't verify multipart message types until entire message is constructed.
-            ;; Only propagate multiparts in include list
-            (if (contains? include-types (m_type (first msg)))
-              (async/>!! out-ch msg)))
-          {:notag notag})))))
+          (async/>!! out-ch notag)
+          {:notag []})
+        {:notag notag})
+      (do
+        (doseq [msg (parse-multipart (dissoc groups :notag :single) unpaired-frags)]
+          (if (contains? include-types (m_type (first msg)))
+            (async/>!! out-ch msg)))
+        {:notag notag}))))
 
 (defn- log-metrics [dropped invalid]
   (logging/info (format "count.invalid.total=%d" invalid))
