@@ -194,3 +194,10 @@
  30 "Special Mark"
  31 "Light Vessel / LANBY / Rigs"
 })
+
+(def cargo-unit-code {
+ 0 "Not available (default)"
+ 1 "kg"
+ 2 "metric tons"
+ 3 "metric kilotons"
+})

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-BUILD_VERSION=0.8.2
+BUILD_VERSION=0.8.3
 
 USAGE="
 Usage: ais-decode [options] INPUT MESSAGES OUTPUT-NAME

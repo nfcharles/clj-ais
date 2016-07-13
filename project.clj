@@ -1,4 +1,4 @@
-(defproject ais "0.8.2-SNAPSHOT"
+(defproject ais "0.8.3-SNAPSHOT"
   :description "AIS (Automatic Identification System) decoding library"
   :url "https://github.com/nfcharles/clj-ais.git"
   :license {:name "Eclipse Public License"
