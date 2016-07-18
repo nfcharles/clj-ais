@@ -97,9 +97,8 @@
 ;; Core
 ;;---
 
-; filter nils
 (defn- consume [n in-ch]
-  (filter valid-syntax? (take-while ais-util/not-nil? (repeatedly n #(async/<!! in-ch)))))
+  (take-while ais-util/not-nil? (repeatedly n #(async/<!! in-ch))))
 
 (defn- group-key [line]
   (if-let  [prefix (ais-ex/parse "g" line)]
@@ -198,9 +197,10 @@
 
 (defn- preprocess-multipart [line include-types unpaired-frags in-ch out-ch]
   (let [remaining (consume (- (m_fc line) 1) in-ch)
-        groups (group-fragments (conj remaining line))]
+        groups (group-fragments (conj (filter valid-syntax? remaining) line))]
     {:drop (concat (-forward (map vector (groups :single)) include-types out-ch)
-                   (-forward-multipart include-types unpaired-frags groups out-ch))}))
+                   (-forward-multipart include-types unpaired-frags groups out-ch)
+                   (filter (complement valid-syntax?) remaining))}))
 
 (defn- log-metrics [dropped invalid]
   (logging/info (format "count.invalid.total=%d" invalid))
