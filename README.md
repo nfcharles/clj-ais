@@ -30,112 +30,7 @@ $ cd /path/to/clj-ais
 $ lein ubjarbar
 ```
 
-The library jars are built in ```clj-ais/target/uberjar/```.
-
-## Usage
-
-The library contains an entrypoint for an example decoding application.  This can be invoked via `bin/ais-decode`
-
-
-```bash
-Usage: ais-decode [options] INPUT MESSAGE-TYPES OUTPUT-NAME
-
-Description:
-  Decodes ais sentences from input source.  At least 1 message type must be specified.
-
-  e.g.
-    bin/ais-decode --output-format csv
-                   --threads 3
-                   /tmp/sample-input.txt
-                   1,2,3,5
-                   decoded-messages
-
-  The prior command generates a file named decoded-messages.csv in cwd with decoded ais sentences
-  of type 1,2,3,5, using 3 threads to decode the sentences.
-
-Options:
- -o, --output-format <format>   Output file format: 'csv' or 'json'
- -t, --threads <int>            Total count of decoding threads.
- -h, --help                     Show help.
-
-Required:
- INPUT         Path to input file.
- MESSAGE-TYPES Comma separated list of message types.  For example, 1,5 decodes ais message
-               types 1 and 5.
- OUTPUT-NAME   Output filename
-```
-
 ## Examples
-
-###  Decoding messages
-#### type 1, 2, 3 
-
-    $ bin/ais-decode --threads 2 --output-format json sample-messages.txt 1,2,3 out
-
-```bash
-JAVA_OPTS=-Xms2048m -Xmx4096m
-RELEASE_JAR=target/uberjar/ais-0.8.2-SNAPSHOT-standalone.jar
-INPUT=sample-messages.txt
-MESSAGE_TYPES=1,2,3
-THREADS=2
-OUTPUT_FORMAT=json
-OUTPUT_NAME=out
-16-06-06 00:57:54 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIS,2015-11-04T08:30:02+00:00
-16-06-06 00:57:54 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: \s:rEV06,c:1446624765*58\!AIVDM,1,1,,B,14`Utdh01@m
-16-06-06 00:57:54 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: idAVMrhh;Va?T00S?,0*6F|10|1446625878.861585|2015-11-04T08:31:18.861Z
-16-06-06 00:57:54 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIE,2015-11-04T08:35:00+00:00
-16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:168] - count.dropped=3
-16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:169] - count.invalid_syntax=4
-16-06-06 00:57:54 ubuntu ERROR [ais.resilient_decoder:145] - 
-                              java.lang.Thread.run              Thread.java:  701
-java.util.concurrent.ThreadPoolExecutor$Worker.run  ThreadPoolExecutor.java:  615
- java.util.concurrent.ThreadPoolExecutor.runWorker  ThreadPoolExecutor.java: 1146
-                                               ...                               
-                 clojure.core.async/thread-call/fn                async.clj:  434
-                  ais.resilient-decoder/process/fn    resilient_decoder.clj:  180
-                                clojure.core/apply                 core.clj:  626
-                                               ...                               
-                      ais.resilient-decoder/decode    resilient_decoder.clj:  143
-                                clojure.core/apply                 core.clj:  624
-                                               ...                               
-                                   ais.core/verify                 core.clj:  121
-ais.exceptions.ChecksumVerificationException: CHKSUM(AIVDM,1,1,,B,35Msq4PPA1FH1WBP7nRWKEiN0000,0) != 29, == 27
-
-16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:184] - count.decoder.thread_1=4
-16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:184] - count.decoder.thread_0=13
-16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:197] - count.collector=4
-16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:197] - count.collector=13
-16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:70] - writing out-part-0.json
-16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:70] - writing out-part-1.json
-16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:209] - count.writer.thread_0=4
-16-06-06 00:57:54 ubuntu INFO [ais.resilient_decoder:209] - count.writer.thread_1=13
-"Elapsed time: 133.006862 msecs"
-```
-  
-#### type 5
-
-    $  bin/ais-decode --output-format json sample-messages.txt 5 out
-
-```bash
-JAVA_OPTS=-Xms2048m -Xmx4096m
-RELEASE_JAR=target/uberjar/ais-0.8.2-SNAPSHOT-standalone.jar
-INPUT=sample-messages.txt
-MESSAGE_TYPES=5
-THREADS=1
-OUTPUT_FORMAT=json
-OUTPUT_NAME=out
-16-06-06 01:03:25 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIS,2015-11-04T08:30:02+00:00
-16-06-06 01:03:25 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: \s:rEV06,c:1446624765*58\!AIVDM,1,1,,B,14`Utdh01@m
-16-06-06 01:03:25 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: idAVMrhh;Va?T00S?,0*6F|10|1446625878.861585|2015-11-04T08:31:18.861Z
-16-06-06 01:03:25 ubuntu DEBUG [ais.resilient_decoder:165] - Invalid syntax: $PWFIE,2015-11-04T08:35:00+00:00
-16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:168] - count.dropped=18
-16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:169] - count.invalid_syntax=4
-16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:184] - count.decoder.thread_0=3
-16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:197] - count.collector=3
-16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:70] - writing out-part-0.json
-16-06-06 01:03:25 ubuntu INFO [ais.resilient_decoder:209] - count.writer.thread_0=3
-"Elapsed time: 106.701369 msecs"
-```
 
 ### Single sentence decoding
 
@@ -260,17 +155,10 @@ Adding support for a new message type requires creating a new type specification
 ```
 
 ## TODO
-### App
-- Use ISO timestamps in logging
-- Configurable log-level
-- Optional metrics configuration (coarse/fine metrics)??
-- Better timing metrics??
-- Decouple lib and app.  Create new repo for ais decoding project and tools.
 
 ### Testing
 - More unit tests
 - More integration tests
-
 
 
 ## License
