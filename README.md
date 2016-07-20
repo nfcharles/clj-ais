@@ -147,7 +147,7 @@ The following represents an unpacked sentence payload for a type 1 message: (```
 ```
 The ```:len``` field in the field specification map is the number of bits representing the particular field.
 
-Adding support for a new message type requires creating a new type specification mapping with properly implemented field deserializers ```:fn```.  See http://catb.org/gpsd/AIVDM.html for more information.  Finally, you must extend the ```ais-mapping/parsing-rules``` multimethod in order to register the new mapping.
+Adding support for a new message type requires creating a new type specification mapping with properly implemented field deserializers ```:fn```.  See http://catb.org/gpsd/AIVDM.html#_ais_payload_interpretation for more information.  Finally, you must extend the ```ais-mapping/parsing-rules``` multimethod in order to register the new mapping.
 
 ```clojure
 ;; Type 25 decoding specification
