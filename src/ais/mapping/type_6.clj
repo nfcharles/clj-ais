@@ -4,13 +4,12 @@
   (:require [ais.types :as ais-types])
   (:require [ais.util :as ais-util])
   (:require [ais.extractors :as ais-ex])
+  (:require [ais.mapping.common :as ais-map-comm])  
   (:gen-class))
-
-(defn- const [c & _] c)
 
 ;; up to 5 AIVDM sentance payloads
 (def mapping-6-generic (list 
-  {:len   6 :desc "Message Type"           :tag "type"       :fn (partial const 6)}
+  {:len   6 :desc "Message Type"           :tag "type"       :fn (partial ais-map-comm/const 6)}
   {:len   2 :desc "Repeat Indicator"       :tag "repeat"     :fn ais-types/u}
   {:len  30 :desc "SourceMMSI"             :tag "mmsi"       :fn ais-types/u}
   {:len   2 :desc "Sequence Number"        :tag "seqno"      :fn ais-types/u}
@@ -23,7 +22,7 @@
 ))
 
 (def mapping-6-base (list 
-  {:len   6 :desc "Message Type"           :tag "type"       :fn (partial const 6)}
+  {:len   6 :desc "Message Type"           :tag "type"       :fn (partial ais-map-comm/const 6)}
   {:len   2 :desc "Repeat Indicator"       :tag "repeat"     :fn ais-types/u}
   {:len  30 :desc "SourceMMSI"             :tag "mmsi"       :fn ais-types/u}
   {:len   2 :desc "Sequence Number"        :tag "seqno"      :fn ais-types/u}

@@ -225,32 +225,25 @@
 ;;;   Writes decoded messages to disk.
 ;;;
 
-;; TODO: Optimize decoding when multipart messages aren't in include-list.  
-;; Don't pass thru multipart fragments.
-(defn- -decode? [include-types line]
-  (if (= (m_fn line) 1)
-    (contains? include-types (m_type line)) true))
-
 (defn- filter-stream [include-types in-ch]
   (let [out-ch (async/chan buffer-size)
-        decode? (partial -decode? include-types)
         unpaired-frags (atom {})]
     (async/thread
       (loop [dropped 0
              invalid 0]
         (if-let [line (async/<!! in-ch)]
           (if (valid-syntax? line) 
-            (if (decode? line)
-              (if (= (m_fn line) 1) ; start message (single | multipart)
-                (if (= (m_fc line) 1)       
+            (if (= (m_fn line) 1) ; start message (single | multipart)
+              (if (= (m_fc line) 1)       
+                (if (contains? include-types (m_type line))
                   (do
                     (async/>!! out-ch [line])
                     (recur dropped invalid))
-                  (let [ret (preprocess-multipart line include-types unpaired-frags in-ch out-ch)]
-                    (recur (+ dropped (count (ret :drop))) invalid)))
+                  (recur (inc dropped) invalid))
                 (let [ret (preprocess-multipart line include-types unpaired-frags in-ch out-ch)]
+                    (recur (+ dropped (count (ret :drop))) invalid)))
+              (let [ret (preprocess-multipart line include-types unpaired-frags in-ch out-ch)]
                   (recur (+ dropped (count (ret :drop))) invalid)))
-              (recur (inc dropped) invalid))
             (do
               (logging/debug (format "Invalid message syntax: %s" line))
               (recur dropped (inc invalid))))
@@ -258,7 +251,7 @@
             (log-metrics (+ dropped (count @unpaired-frags)) invalid)
             (async/close! out-ch)))))
     out-ch)) 
-
+               
 (defn- decode [format & msgs]
   (try
     (apply ais-core/parse-ais format (apply ais-core/verify msgs))
