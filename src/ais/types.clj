@@ -46,4 +46,26 @@
 
 (defn d [bits] bits)
 
-(defn a [size bits] bits)
+
+(defn array-bit-len [max-size len acc bits]
+  (let [max-bits (* max-size len)]
+    (min max-bits (* (Math/floor (/ (count bits) len)) len))))
+
+(defn static-array-bit-len [max-size len tag acc bits]
+  (let [bits-len (* (acc tag) len)
+        max-len (* max-size len)]
+    (if (> bits-len max-len)
+      (throw (java.lang.Exception.
+        (format "Calculated array bit length is too large: calc[%d], max-len[%d]" bits-len max-len)))
+      bits-len)))
+
+(defn a [len mapper parser collector record bits]
+  (loop [i (Math/floor (/ (count bits) len))
+         bts bits
+         acc []]
+    (if (> i 0)
+      (let [bit-fld (subs bts 0 len)]
+        (recur (dec i)
+               (subs bts len)
+               (conj acc (parser (mapper bit-fld) {} collector bit-fld))))
+      acc)))

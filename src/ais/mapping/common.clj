@@ -7,3 +7,5 @@
 (def lon (partial ais-types/I (/ 1.0 600000) 4))
 
 (def lat (partial ais-types/I (/ 1.0 600000) 4))
+
+(def speed (partial ais-types/U (/ 1.0 10) 1))
