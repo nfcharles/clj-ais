@@ -78,13 +78,13 @@
     (let [[acc collector] (data-collector "json")]
       (is (= (parse-tag-block acc collector ["c" "s"] aivdm-message) {"timestamp" "20151123T155500Z" "station" "FooBar"})))))
 
-(deftest decode-binary-payload-test
+(deftest parse-binary-test
   (testing "Decode binary payload - json"
     (let [[acc collector] (data-collector "json")]
-      (is (= (decode-binary-payload map-1 acc collector bin-load-1) dec-load-1))))
+      (is (= (parse-binary map-1 acc collector bin-load-1) dec-load-1))))
   (testing "Decode binary payload - csv"
     (let [[acc collector] (data-collector "csv")]
-      (is (= (decode-binary-payload map-2 acc collector bin-load-2) dec-load-2)))))
+      (is (= (parse-binary map-2 acc collector bin-load-2) dec-load-2)))))
 
 (deftest verify-test
   (testing "Valid Message"

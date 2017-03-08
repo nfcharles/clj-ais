@@ -52,8 +52,10 @@
        (map char->binary)
        (apply str)))
 
-;; if a total-len is not given infer from total bits / array len
 (defn parse-binary [fields acc collector bits]
+  "Takes a sequence of bits and constructs an output data structure via
+  the collector function.  Bitfields are processed via field type handlers
+  and accummulated via the collector function."
   (loop [flds fields
          rcrd acc
          n-bits (count bits)
@@ -61,9 +63,8 @@
     (if-let [fld (first flds)]
         (let [tag (fld :tag)
 	      handler (fld :fn)]
-	  (if (fld :a)
-	    ;; arrays are complex types that must be handled separately
-	    (let [len ((fld :len) rcrd bits)] ;; a function determines how many bits to parse
+	  (if (fld :a) ;; array type
+	    (let [len ((fld :len) rcrd bits)]
 	      (recur (rest flds)
                      (collector rcrd tag (handler collector rcrd (subs bts 0 len)))
                      (- n-bits len)
@@ -76,18 +77,19 @@
         rcrd)))
 
 
-
 (defn parse-tag-block [acc collector tags block]
+  "Decodes ais message tag block"
   (loop [t tags
          a acc]
     (if-let [tag (first t)]
-      (let [spec (ais-mappings/tag-mapping tag)
-            value ((spec :ex-fn) block)]
+      (let [fld (ais-mappings/tag-mapping tag)
+            value ((fld :ex-fn) block)]
         (recur (rest t)
-               (collector a (spec :tag) (if (nil? value) nil ((spec :fn) value)))))
+               (collector a (fld :tag) (if (nil? value) nil ((fld :fn) value)))))
       a)))
 
 (defn parse [data-format tag-block payload fill-bits]
+  "Decodes complete ais message"
   (let [[acc collector] (data-collector data-format)
         bits (ais-util/pad (payload->binary payload) fill-bits)]
     (parse-binary (ais-mappings/parsing-rules bits)                    ; msg-type field decoding specs
@@ -99,6 +101,7 @@
                   bits)))                                              ; raw binary payload
 
 (defn parse-ais [data-format msg & frags]
+  "Decodes a sequence of ais messages in a data-format data structure"
   (let [all (conj frags msg)]
     (parse data-format
            (ais-ex/parse "tags" msg)
@@ -106,6 +109,8 @@
            (ais-ex/parse "fill-bits" (last all)))))
 
 (defn verify [& in-msgs]
+  "Checks if sequence of messages have valid checksums and proper formatting.  Raises
+  exceptions otherwise"
   (loop [msgs in-msgs
          verified []]
     (if-let [msg (first msgs)]
