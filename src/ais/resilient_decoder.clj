@@ -1,7 +1,7 @@
 (ns ais.resilient_decoder
   (:require [ais.util :as ais-util])
   (:require [ais.extractors :as ais-ex])
-  (:require [ais.mappings :as ais-map])
+  (:require [ais.mapping.core :as ais-map])
   (:require [ais.core :as ais-core])
   (:require [clojure.core.async :as async])
   (:require [clojure.data.json :as json])
