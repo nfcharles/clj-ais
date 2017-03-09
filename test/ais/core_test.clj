@@ -13,7 +13,7 @@
 (def bad-group-message ["\\g:1-2-1996,c:1446625797*57\\!AIVDM,2,1,6,A,581:K8@2<lS5KL@;V20dTpN0E8T>22222222221@BPR=>6e50HT2DQ@EDlp8,0*18" "\\g:2-2-1996*5A\\!AIVDM,2,2,6,A,88888888880,2*22"])
 
 
-(defn- parse-field [bits]
+(defn- parse-field [rcrd bits]
   (Integer/parseInt bits 2))
 
 ;; ---
