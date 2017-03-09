@@ -32,7 +32,7 @@
         :fn    #(read-string %) } ))
 
 (defn- get-type [bits]
-  (ais-types/u (subs bits 0 6)))
+  (ais-types/u nil (subs bits 0 6)))
 
 (defmulti parsing-rules 
   (fn [bits] (get-type bits)))

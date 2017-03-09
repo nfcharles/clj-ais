@@ -79,14 +79,14 @@
 ))
 
 (defn- determine-24-b-map [bits]
-  (let [mmsi-prefix (Math/floor (/ (ais-types/u (subs bits 2 32)) 10000000))]
+  (let [mmsi-prefix (Math/floor (/ (ais-types/u nil (subs bits 2 32)) 10000000))]
     (if (= 98.0 mmsi-prefix) ; check for auxilary mmsi signature (98XXXXXXX)
       mapping-24-b-mmsi
       mapping-24-b-dim)))
       
 (defn determine-24-map [bits]
-  ;(let [part-no (ais-types/u (subs bits 32 34))]
-  (let [part-no (ais-types/u (subs bits 38 40))]
+  ;(let [part-no (ais-types/u nil (subs bits 32 34))]
+  (let [part-no (ais-types/u nil (subs bits 38 40))]
     ;(println (format "part-no: %d" part-no))
     (case part-no
       0 mapping-24-a

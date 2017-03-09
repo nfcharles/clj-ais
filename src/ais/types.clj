@@ -3,19 +3,19 @@
   (:require [clojure.string :as string])
   (:gen-class))
 
-(defn u [bits]
+(defn u [rcrd bits]
   "Parses bits into unsigned integer."
   (Integer/parseInt bits 2))
 
 (defn U
   "Parses bits into scaled unsigned integer; enders as float with
   d-places decimal places."
-  ([scale d-places bits]
-    (* (u bits) scale))
-  ([scale d-places xformer bits]
-    (xformer (U scale d-places bits))))
+  ([scale d-places rcrd bits]
+    (* (u rcrd bits) scale))
+  ([scale d-places xformer rcrd bits]
+    (xformer (U scale d-places rcrd bits))))
 
-(defn i [bits]
+(defn i [rcrd bits]
   "Parses bits into a signed integer."
   (if (= "0" (subs bits 0 1))
     (Integer/parseInt bits 2)
@@ -24,20 +24,20 @@
 (defn I
   "Parses bits into scaled signed integer; renders as float with
   d-places decimal places."
-  ([scale d-places bits]
-    (* (i bits) scale))
-  ([scale d-places xformer bits]
-    (xformer (I scale d-places bits))))
+  ([scale d-places rcrd bits]
+    (* (i rcrd bits) scale))
+  ([scale d-places xformer rcrd bits]
+    (xformer (I scale d-places rcrd bits))))
 
-(defn b [bits]
+(defn b [rcrd bits]
   "Parses bits into boolean."
-  (if (== (u bits) 0) false true))
+  (if (== (u rcrd bits) 0) false true))
 
-(defn e [vocab bits]
+(defn e [vocab rcrd bits]
   "Parses bits into enumerated type (controlled vocabulary)."
-  (vocab (u bits)))
+  (vocab (u rcrd bits)))
 
-(defn t [vocab len bits]
+(defn t [vocab len rcrd bits]
   "Parses bits into string (packed six-bit ASCII)."
   (loop [i 0
          left (count bits)
@@ -47,15 +47,15 @@
       (recur (inc i)
              (- left 6)
              (subs b 6)
-             (conj w (e vocab (subs b 0 6))))
+             (conj w (e vocab rcrd (subs b 0 6))))
       (string/replace (apply str w) #"\s*(?:[@]*)?\s*$" ""))))
         
 
-(defn x [bits]
+(defn x [rcrd bits]
   "Parses bits into spare of reserve bits (noop)."
   bits)
 
-(defn d [bits]
+(defn d [rcrd bits]
   "Data bits - uninterpreted binary (noop)."
   bits)
 
@@ -76,7 +76,7 @@
         (format "Calculated array bit length is too large: calc[%d], max-len[%d]" bits-len max-len)))
       bits-len)))
 
-(defn a [len mapper parser collector record bits]
+(defn a [len mapper parser collector rcrd bits]
   "Parses bits into array.  Mapper determines the collection of fields that make
   up an array entry.  Parser interprets bitfields and aggregates into decoded values
   via the collector function.  Returns a sequence of parsed (decoded) bits."

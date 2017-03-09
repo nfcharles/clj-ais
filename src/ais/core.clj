@@ -61,20 +61,18 @@
          n-bits (count bits)
          bts bits]
     (if-let [fld (first flds)]
-        (let [tag (fld :tag)
-	      handler (fld :fn)]
-	  (if (fld :a) ;; array type
-	    (let [len ((fld :len) rcrd bits)]
-	      (recur (rest flds)
-                     (collector rcrd tag (handler collector rcrd (subs bts 0 len)))
-                     (- n-bits len)
-                     (subs bts len)))
-            (let [len (min (fld :len) n-bits)]
-              (recur (rest flds)
-                     (collector rcrd tag (handler (subs bts 0 len)))
-                     (- n-bits len)
-                     (subs bts len)))))
-        rcrd)))
+      (if (fld :a) ;; array type
+        (let [len ((fld :len) rcrd bits)]
+          (recur (rest flds)
+                 (collector rcrd (fld :tag) ((fld :fn) collector rcrd (subs bts 0 len)))
+                 (- n-bits len)
+                 (subs bts len)))
+        (let [len (min (fld :len) n-bits)]
+          (recur (rest flds)
+                 (collector rcrd (fld :tag) ((fld :fn) rcrd (subs bts 0 len)))
+                 (- n-bits len)
+                 (subs bts len))))
+      rcrd)))
 
 
 (defn parse-tag-block [acc collector tags block]

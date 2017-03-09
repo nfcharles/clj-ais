@@ -256,8 +256,8 @@
   (try
     (apply ais-core/parse-ais format (apply ais-core/verify msgs))
     (catch Exception e
-      (pprint/pprint msgs)
-      (logging/error e))))
+      (logging/error e)
+      (logging/error msgs))))
 
 (defn- process [format n in-ch]
   (let [out-ch (async/chan buffer-size)
