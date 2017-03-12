@@ -63,17 +63,21 @@
 (defn array-bit-len [max-size len rcrd bits]
   "Returns length of array bitfield.  The count of elements in the
   array are determined dynamically."
-  (let [max-bits (* max-size len)]
-    (min max-bits (* (Math/floor (/ (count bits) len)) len))))
+  (let [max-bits (* max-size len)
+        n-bits (count bits)
+	last-rcrd-len (mod (min max-bits n-bits) len)]
+    (if (> last-rcrd-len 0)
+      (throw (Exception. (format "Last record incomplete: %s bits missing." (- len last-rcrd-len))))
+      (min max-bits (* (Math/floor (/ n-bits len)) len)))))
 
 (defn static-array-bit-len [max-size len tag rcrd bits]
   "Returns length of array bitfield.  The count of elements in the array
   are determined from the specified field in the input rcrd."
   (let [bits-len (* (rcrd tag) len)
-        max-len (* max-size len)]
-    (if (> bits-len max-len)
+        max-bits (* max-size len)]
+    (if (> bits-len max-bits)
       (throw (java.lang.Exception.
-        (format "Calculated array bit length is too large: calc[%d], max-len[%d]" bits-len max-len)))
+        (format "Calculated array bit length is too large: calc[%d], max-bits[%d]" bits-len max-bits)))
       bits-len)))
 
 (defn a [len mapper parser collector rcrd bits]

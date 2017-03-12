@@ -1,6 +1,7 @@
 (ns ais.types-test
   (:require [clojure.test :refer :all]
-            [ais.core  :refer [parse-binary data-collector]]
+            [ais.core  :refer [data-collector]]
+            [ais.mapping.core :refer [parse-binary]]
             [ais.types :refer :all]))
 
 (deftest u-test
