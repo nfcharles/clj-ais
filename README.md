@@ -1,26 +1,28 @@
 # clj-ais
 
-clj-ais is a library for decoding AIS (Automatic Identification System) messages - reference (http://catb.org/gpsd/AIVDM.html). The following were used as testing sources
- - http://rl.se/aivdm. 
- - http://fossies.org/linux/gpsd/test/sample.aivdm
+clj-ais is an AIS (Automatic Identification System) message decoding library built according to the following spec
+  - http://catb.org/gpsd/AIVDM.html
 
+Decoded messages were validated against the following online decoder
+  - http://www.aggsoft.com/ais-decoder.htm
 
 #### Supported Types
-| Type | Description                         |
-| ---- | ------------------------------------|
-|  1   | Position Report Class A             |
-|  2   | Position Report Class A             |
-|  3   | Position Report Class A             |
-|  4   | Base Station Report                 |
-|  5   | Static and Voyage Related Data      |
-|  7   | Binary Acknowledge                  |
-| 18   | Standard Class B CS Position Report |
-| 19   | Extended Class B CS Position Report |
-| 21   | Aid-to-Navigation Report            |
-| 20   | Data Link Management Message        |
-| 24   | Static Data Report                  |
+| Type | Description                           |
+| ---- | --------------------------------------|
+|  1   | Position Report Class A               |
+|  2   | Position Report Class A               |
+|  3   | Position Report Class A               |
+|  4   | Base Station Report                   |
+|  5   | Static and Voyage Related Data        |
+|  7   | Binary Acknowledge                    |
+|  9   | Standard SAR Aircraft Position Report |
+| 18   | Standard Class B CS Position Report   |
+| 19   | Extended Class B CS Position Report   |
+| 21   | Aid-to-Navigation Report              |
+| 20   | Data Link Management Message          |
+| 24   | Static Data Report                    |
 
-While the above messages are the only types supported today, clj-ais has the necessary interfaces for extending type support.  See _Extending_ for more information about extending the library.
+Adding additional types is simple; See _Extending_ for more information about extending type support.
 
 ## Installation
 
@@ -108,16 +110,13 @@ Run integration tests
 
     $ lein test ais.integration.type_1-test
 
-### Bugs
-There are no known bugs -- which is not to say there are NO bugs.  Current unit test suite passes but is by no means exhaustive.
-
 ## Extending
 
-Sentences are decoded in accordance with type specification mappings.  The data structure is a list of maps where each map represents a field of an uncompressed message -- bit field representation -- and the requisite components necessary to decode it.
+Field mapping configurations are used to decode sentences.  The data structure is a list of maps where each map represents all the components necessary to decode an unpacked bitfield.
 
 ```clojure
 (def mapping-5 (list
-  {:len   6 :desc "Message Type"           :tag "type"         :fn (partial const 5)}
+  {:len   6 :desc "Message Type"           :tag "type"         :fn (partial ais-map-comm/const 5)}
   {:len   2 :desc "Repeat Indicator"       :tag "repeat"       :fn ais-types/u}
   {:len  30 :desc "MMSI"                   :tag "mmsi"         :fn ais-types/u}
   {:len   2 :desc "AIS Version"            :tag "ais_version"  :fn ais-types/u}
@@ -148,7 +147,7 @@ The following represents an unpacked sentence payload for a type 1 message: (```
 ```
 The ```:len``` field in the field specification map is the number of bits representing the particular field.
 
-Adding support for a new message type requires creating a new type specification mapping with properly implemented field deserializers ```:fn```.  See http://catb.org/gpsd/AIVDM.html#_ais_payload_interpretation for more information.  Finally, you must extend the ```ais-mapping/parsing-rules``` multimethod in order to register the new mapping.
+Adding support for a new message type requires creating a new field mapping configuration with properly implemented field deserializers ```:fn```.  See http://catb.org/gpsd/AIVDM.html#_ais_payload_interpretation for more information.  Finally, you must extend the ```ais-mapping/parsing-rules``` multimethod in order to register the new mapping.
 
 ```clojure
 ;; Type 25 decoding specification
