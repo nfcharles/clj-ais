@@ -4,10 +4,12 @@
   (:require [ais.types :as ais-types])
   (:require [ais.util :as ais-util])
   (:require [ais.extractors :as ais-ex])
+  (:require [ais.mapping.common :as ais-map-comm])
   (:require [ais.mapping.type_1_2_3 :as type_1_2_3])
   (:require [ais.mapping.type_4  :as type_4])
   (:require [ais.mapping.type_5  :as type_5])
   (:require [ais.mapping.type_6  :as type_6])
+  (:require [ais.mapping.type_7  :as type_7])
   (:require [ais.mapping.type_18 :as type_18])
   (:require [ais.mapping.type_19 :as type_19])
   (:require [ais.mapping.type_20 :as type_20])
@@ -15,7 +17,8 @@
   (:require [ais.mapping.type_24 :as type_24])  
   (:gen-class))
 
-(defn- const [c & _] c)
+
+(def parse-binary ais-map-comm/parse-binary)
 
 (def tag-mapping (hash-map
   "c" { :desc  "Timestamp" 
@@ -43,6 +46,7 @@
 (defmethod parsing-rules  4 [bits] type_4/mapping-4)
 (defmethod parsing-rules  5 [bits] type_5/mapping-5)
 (defmethod parsing-rules  6 [bits] (type_6/determine-6-map bits))
+(defmethod parsing-rules  7 [bits] type_7/mapping-7)
 (defmethod parsing-rules 18 [bits] type_18/mapping-18)
 (defmethod parsing-rules 19 [bits] type_19/mapping-19)
 (defmethod parsing-rules 20 [bits] type_20/mapping-20)

@@ -13,6 +13,7 @@ clj-ais is a library for decoding AIS (Automatic Identification System) messages
 |  3   | Position Report Class A             |
 |  4   | Base Station Report                 |
 |  5   | Static and Voyage Related Data      |
+|  7   | Binary Acknowledge                  |
 | 18   | Standard Class B CS Position Report |
 | 19   | Extended Class B CS Position Report |
 | 21   | Aid-to-Navigation Report            |

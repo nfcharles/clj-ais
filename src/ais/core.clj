@@ -52,29 +52,6 @@
        (map char->binary)
        (apply str)))
 
-(defn parse-binary [fields acc collector bits]
-  "Takes a sequence of bits and constructs an output data structure via
-  the collector function.  Bitfields are processed via field type handlers
-  and accummulated via the collector function."
-  (loop [flds fields
-         rcrd acc
-         n-bits (count bits)
-         bts bits]
-    (if-let [fld (first flds)]
-      (if (fld :a) ;; array type
-        (let [len ((fld :len) rcrd bits)]
-          (recur (rest flds)
-                 (collector rcrd (fld :tag) ((fld :fn) collector rcrd (subs bts 0 len)))
-                 (- n-bits len)
-                 (subs bts len)))
-        (let [len (min (fld :len) n-bits)]
-          (recur (rest flds)
-                 (collector rcrd (fld :tag) ((fld :fn) rcrd (subs bts 0 len)))
-                 (- n-bits len)
-                 (subs bts len))))
-      rcrd)))
-
-
 (defn parse-tag-block [acc collector tags block]
   "Decodes ais message tag block"
   (loop [t tags
@@ -90,13 +67,13 @@
   "Decodes complete ais message"
   (let [[acc collector] (data-collector data-format)
         bits (ais-util/pad (payload->binary payload) fill-bits)]
-    (parse-binary (ais-mappings/parsing-rules bits)                    ; msg-type field decoding specs
-                  (parse-tag-block acc 
-                                   collector 
-                                   ["c" "s" "n"] 
-                                   (if (nil? tag-block) "" tag-block)) ; use tag metadata as initial accumulator
-                  collector                                            ; accumulator function
-                  bits)))                                              ; raw binary payload
+    (ais-mappings/parse-binary (ais-mappings/parsing-rules bits)                    ; msg-type field decoding specs
+                               (parse-tag-block acc
+                                                collector
+                                                ["c" "s" "n"]
+                                                (if (nil? tag-block) "" tag-block)) ; use tag metadata as initial accumulator
+                               collector                                            ; accumulator function
+                               bits)))                                              ; raw binary payload
 
 (defn parse-ais [data-format msg & frags]
   "Decodes a sequence of ais messages in a data-format data structure"
