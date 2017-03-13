@@ -18,6 +18,7 @@ Decoded messages were validated against the following online decoder
 |  9   | Standard SAR Aircraft Position Report |
 | 10   | UTC/Date Inquiry                      |
 | 12   | Addressed Safety-Related Message      |
+| 14   | Safety-Related Broadcast Message      |
 | 18   | Standard Class B CS Position Report   |
 | 19   | Extended Class B CS Position Report   |
 | 21   | Aid-to-Navigation Report              |
