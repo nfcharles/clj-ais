@@ -4,10 +4,12 @@
             [ais.mapping.core :as ais-map]
             [ais.core :as ais-core]
             [clojure.core.async :as async]
-            [clojure.data.json :as json]
+            ;[clojure.data.json :as json]
             [clojure.data.csv :as csv]
             [clojure.pprint :as pprint]
             [clojure.stacktrace :as strace]
+            ;[clj-json.core :as json]
+            [pjson.core :as json]
             [taoensso.timbre :as logging]
             [taoensso.timbre.appenders.core :as appenders])
   (:gen-class))
@@ -32,6 +34,12 @@
 (defmulti write-data
   (fn [output-format & _] output-format))
 
+(comment ; clj-json impl
+(defmethod write-data "json" [_ writer data ]
+  (.write writer (json/generate-string data)))
+)
+
+; pjson impl
 (defmethod write-data "json" [_ writer data ]
   (.write writer (json/write-str data)))
 
