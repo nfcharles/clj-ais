@@ -8,8 +8,8 @@
             [clojure.data.csv :as csv]
             [clojure.pprint :as pprint]
             [clojure.stacktrace :as strace]
-            ;[clj-json.core :as json]
-            [pjson.core :as json]
+            [clj-json.core :as json]
+            ;[pjson.core :as json]
             [taoensso.timbre :as logging]
             [taoensso.timbre.appenders.core :as appenders])
   (:gen-class))
@@ -34,14 +34,17 @@
 (defmulti write-data
   (fn [output-format & _] output-format))
 
-(comment ; clj-json impl
+
+; clj-json impl
 (defmethod write-data "json" [_ writer data ]
   (.write writer (json/generate-string data)))
-)
 
+
+(comment
 ; pjson impl
 (defmethod write-data "json" [_ writer data ]
   (.write writer (json/write-str data)))
+)
 
 (defmethod write-data "csv" [_ writer data]
   (csv/write-csv writer data))
@@ -148,14 +151,14 @@
         active-threads (atom n)]
     (dotimes [i n]
       (async/thread
-        (loop [acc []]
+        (loop [acc (transient [])]
           (if-let [msgs (async/<!! in-ch)]
             (if-let [decoded (apply decode format msgs)]
-              (recur (conj acc decoded))
+              (recur (conj! acc decoded))
               (recur acc))
             (do
               (logging/info (str "count.decoder.thread_" i "=" (count acc)))
-              (async/>!! out-ch acc))))
+              (async/>!! out-ch (persistent! acc)))))
         (swap! active-threads dec)
         (if (= @active-threads 0)
           (async/close! out-ch))))

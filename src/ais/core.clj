@@ -31,10 +31,10 @@
   (fn [data-format] data-format))
 
 (defmethod data-collector "json" [_]
-  [{} #(assoc %1 %2 %3)])
+  [(transient {}) #(assoc! %1 %2 %3)])
 
 (defmethod data-collector "csv" [_]
-  [[] #(conj %1 %3)])
+  [(transient []) #(conj! %1 %3)])
 
 (defmethod data-collector :default [_]
   (data-collector "csv"))
