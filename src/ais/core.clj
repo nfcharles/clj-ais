@@ -1,10 +1,10 @@
 (ns ais.core
-  (:require [clojure.data.json :as json])
-  (:require [ais.extractors :as ais-ex])
-  (:require [ais.mapping.core :as ais-mappings])
-  (:require [ais.types :as ais-types])
-  (:require [ais.util :as ais-util])
-  (:require [ais.exceptions :refer :all])
+  (:require [clojure.data.json :as json]
+            [ais.extractors :as ais-ex]
+            [ais.mapping.core :as ais-map]
+            [ais.types :as ais-types]
+            [ais.util :as ais-util]
+            [ais.exceptions :refer :all])
   (:gen-class))
 
 
@@ -39,41 +39,16 @@
 (defmethod data-collector :default [_]
   (data-collector "csv"))
 
-;; ---
-;; Core
-;; ---
 
-(defn- char->binary [c]
-  (ais-util/decimal->binary 
-   (ais-util/char->decimal c)))
-
-(defn payload->binary [payload]
-  (->> (seq payload)
-       (map char->binary)
-       (apply str)))
-
-(defn parse-tag-block [acc collector tags block]
-  "Decodes ais message tag block"
-  (loop [t tags
-         a acc]
-    (if-let [tag (first t)]
-      (let [fld (ais-mappings/tag-mapping tag)
-            value ((fld :ex-fn) block)]
-        (recur (rest t)
-               (collector a (fld :tag) (if (nil? value) nil ((fld :fn) value)))))
-      a)))
+(def tags ["c" "s" "n"])
 
 (defn parse [data-format tag-block payload fill-bits]
   "Decodes complete ais message"
   (let [[acc collector] (data-collector data-format)
-        bits (ais-util/pad (payload->binary payload) fill-bits)]
-    (ais-mappings/parse-binary (ais-mappings/parsing-rules bits)                    ; msg-type field decoding specs
-                               (parse-tag-block acc
-                                                collector
-                                                ["c" "s" "n"]
-                                                (if (nil? tag-block) "" tag-block)) ; use tag metadata as initial accumulator
-                               collector                                            ; accumulator function
-                               bits)))                                              ; raw binary payload
+        bits (ais-util/pad (ais-util/payload->binary payload) fill-bits)]
+    (ais-map/parse-binary (ais-map/parsing-rules bits)
+                          (ais-map/parse-tag-block acc collector tags (if (nil? tag-block) "" tag-block))
+                          collector bits)))
 
 (defn parse-ais [data-format msg & frags]
   "Decodes a sequence of ais messages in a data-format data structure"
@@ -93,7 +68,8 @@
         (if (not-any? nil? [env chksum])
           (if (= (ais-util/checksum env) chksum)
             (recur (rest msgs) (conj verified msg))
-             (throw (ais.exceptions.ChecksumVerificationException. (format "CHKSUM(%s) != %s, == %s" env chksum (ais-util/checksum env)))))
+             (throw (ais.exceptions.ChecksumVerificationException.
+	              (format "CHKSUM(%s) != %s, == %s" env chksum (ais-util/checksum env)))))
           (throw (ais.exceptions.MessageFormatException. (str "Failed parsing (env, chksum) from " msg)))))
       verified)))
 

@@ -5,10 +5,9 @@
 (def not-nil? (complement nil?))
 
 (defn timestamp->iso 
-  ([tstamp format]
-    (->> (java.util.Date. tstamp)
-         (.format (java.text.SimpleDateFormat. format))))
-  ([tstamp]
+  ([^long tstamp format]
+    (.format (java.text.SimpleDateFormat. format) (java.util.Date. tstamp)))
+  ([^long tstamp]
     (timestamp->iso tstamp "yyyyMMdd'T'HHmmss'Z'")))
 
 (defn checksum [msg]
@@ -33,7 +32,7 @@
  (let [tmp (- (int c) 48)]
     (if (> tmp 40) (- tmp 8) tmp)))
 
-(defn char-str->decimal [c]
+(defn char-str->decimal [^String c]
   (char->decimal (.charAt c 0)))
 
 (defn decimal->binary
@@ -44,3 +43,13 @@
               (apply str)) binary)))
   ([num]
     (decimal->binary num 6)))
+
+(defn char->binary [c]
+  (decimal->binary
+   (char->decimal c)))
+
+(defn payload->binary [payload]
+  "Convert ais sentence payload to binary string"
+  (->> (seq payload)
+       (map char->binary)
+       (apply str)))
