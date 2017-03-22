@@ -1,14 +1,17 @@
 (ns ais.util
   (:require [clojure.string :as string])
+  (:require [clj-time.coerce :as c])
+  (:require [clj-time.format :as f])
+  (:require [ais.vocab :as ais-vocab])
   (:gen-class))
 
 (def not-nil? (complement nil?))
 
 (defn timestamp->iso 
-  ([^long tstamp format]
-    (.format (java.text.SimpleDateFormat. format) (java.util.Date. tstamp)))
-  ([^long tstamp]
-    (timestamp->iso tstamp "yyyyMMdd'T'HHmmss'Z'")))
+  ([^long ts formatter]
+    (f/unparse formatter (c/from-long ts)))
+  ([^long ts]
+    (timestamp->iso ts (f/formatter "yyyyMMddHHmmss"))))
 
 (defn checksum [msg]
   (let [sum (Integer/toString (reduce bit-xor 0 (map int (seq msg))) 16)]
@@ -16,8 +19,8 @@
       (string/upper-case (str "0" sum))
       (string/upper-case sum))))
 
-(defn pad [payload num-fill-bits]
-  (str payload (apply str (repeat num-fill-bits "0"))))
+(defn pad [payload n-bits]
+  (str payload (apply str (repeat n-bits "0"))))
 
 (defn bitmask [len]
   (Integer/parseInt (apply str (repeat len "1")) 2))
@@ -32,24 +35,10 @@
  (let [tmp (- (int c) 48)]
     (if (> tmp 40) (- tmp 8) tmp)))
 
-(defn char-str->decimal [^String c]
-  (char->decimal (.charAt c 0)))
-
-(defn decimal->binary
-  ([num str-len]
-    (let [binary (Integer/toString num 2)
-          len (count binary)]
-      (str (->> (repeat (- str-len len) "0")
-              (apply str)) binary)))
-  ([num]
-    (decimal->binary num 6)))
-
-(defn char->binary [c]
-  (decimal->binary
-   (char->decimal c)))
-
 (defn payload->binary [payload]
   "Convert ais sentence payload to binary string"
-  (->> (seq payload)
-       (map char->binary)
-       (apply str)))
+  (loop [pseq (seq payload)
+         acc []]
+    (if-let [c (first pseq)]
+      (recur (rest pseq) (conj acc (ais-vocab/char->bits c)))
+      (apply str acc))))

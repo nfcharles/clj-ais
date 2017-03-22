@@ -25,18 +25,18 @@
 (def parse-binary ais-map-comm/parse-binary)
 
 (def tag-mapping (hash-map
-  "c" { :desc  "Timestamp" 
-        :tag   "timestamp" 
-        :ex-fn (partial ais-ex/parse "c")
-        :fn    #(ais-util/timestamp->iso (* 1000 %)) } 
-  "s" { :desc  "Source"
-        :tag   "station"
-        :ex-fn (partial ais-ex/parse "s")
-        :fn    #(identity %)} 
-  "n" { :desc  "Line"
-        :tag   "line"
-        :ex-fn (partial ais-ex/parse "n")
-        :fn    #(read-string %) } ))
+  "c" { :desc   "Timestamp"
+        :tag    "timestamp"
+        :parser (partial ais-ex/parse "c")
+        :fn     #(ais-util/timestamp->iso (* 1000 %)) }
+  "s" { :desc   "Source"
+        :tag    "station"
+        :parser (partial ais-ex/parse "s")
+        :fn     #(identity %)}
+  "n" { :desc   "Line"
+        :tag    "line"
+        :parser (partial ais-ex/parse "n")
+        :fn     #(read-string %) } ))
 
 
 (defn parse-tag-block [acc collector tags block]
@@ -45,7 +45,7 @@
          a acc]
     (if-let [tag (first t)]
       (let [fld (tag-mapping tag)
-            value ((fld :ex-fn) block)]
+            value ((fld :parser) block)]
         (recur (rest t)
                (collector a (fld :tag) (if (nil? value) nil ((fld :fn) value)))))
       a)))

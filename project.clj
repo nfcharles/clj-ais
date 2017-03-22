@@ -9,7 +9,8 @@
 		 [org.clojure/core.async "0.2.374"]
 		 [com.taoensso/timbre "4.3.1"]
 		 [pjson "0.3.8"]
-		 [clj-json "0.5.3"]]
+		 [clj-json "0.5.3"]
+		 [clj-time "0.13.0"]]
   :repositories [["releases" "file:////home/ncharles/development/clojure/repos/local"]]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}

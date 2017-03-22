@@ -1,6 +1,7 @@
 (ns ais.decode
   (:require [ais.util :as ais-util]
             [ais.extractors :as ais-ex]
+            [ais.vocab :as ais-vocab]
             [ais.mapping.core :as ais-map]
             [ais.core :as ais-core]
             [clojure.core.async :as async]
@@ -40,8 +41,8 @@
   (.write writer (json/generate-string data)))
 
 
-(comment
 ; pjson impl
+(comment
 (defmethod write-data "json" [_ writer data ]
   (.write writer (json/write-str data)))
 )
@@ -57,94 +58,90 @@
     (write-data output-format writer lines)))
 
 ;;---
-;; Util
-;;--
+;; Core
+;;---
 
 (defn- parse-types [types]
   (into #{} (map read-string (clojure.string/split types #","))))
 
 (defn- extract-type [payload]
-  (->> (seq payload)
-       (first)
-       (ais-util/char->decimal)))
+  (ais-vocab/char-str->dec (subs payload 0 1)))
 
-(defn- valid-syntax? [message]
-  (== (count (ais-ex/parse "env-chksum" message)) 2))
-
-(defn- m_type [line]
-  (extract-type (ais-ex/parse "payload" line)))
-
-(defn- m_fc [line]
-  (ais-ex/parse "frag-count" line))
-
-(defn- m_fn [line]
-  (ais-ex/parse "frag-num" line))
-
-
-;;---
-;; Core
-;;---
-
-(defn- consume [base n in-ch]
-  (loop [acc [base]
-         i n]
+(defn- consume [base n ch]
+  (loop [i n
+         acc [base]]
     (if (> i 0)
-      (if-let [line (async/<!! in-ch)]
-        (recur (conj acc line) (dec i))
+      (if-let [line (async/<!! ch)]
+        (recur (dec i) (conj acc (ais-ex/tokenize line)))
 	acc)
       acc)))
 
-(defn- log-metrics [dropped invalid]
-  (logging/info (format "count.invalid.total=%d" invalid))
-  (logging/info (format "count.dropped.total=%d" dropped)))
+(defn <<multipart [msg ch]
+  (consume msg (- (msg :fc) 1) ch))
 
-;; TODO: if multipart types are not in include types, consume remainder fragments and then discard
-;; this prevents fragments receieved out of order exception.
+(defn- process? [include-types msg]
+  (contains? include-types (extract-type (msg :pl))))
+
+(defn- log-metrics [dropped invalid error]
+  (logging/info (format "count.dropped.total=%d" dropped))
+  (logging/info (format "count.invalid.total=%d" invalid))
+  (logging/info (format "count.error.total=%d" error)))
+
 (defn- filter-stream [include-types in-ch]
   (let [out-ch (async/chan buffer-size)
-        unpaired-frags (atom {})]
+	proc? (partial process? include-types)]
     (async/thread
       (loop [dropped 0
-             invalid 0]
-        (if-let [line (async/<!! in-ch)]
-          (if (valid-syntax? line)
-            (if (= (m_fn line) 1) ; start message (single | multipart)
-              (if (contains? include-types (m_type line))
-                (let [n-frags (m_fc line)]
-                  (if (= n-frags 1)
+             invalid 0
+	     error   0]
+	(if-let [line (async/<!! in-ch)]
+          (if-let [msg (ais-ex/tokenize line)]
+            (if (= (msg :fn) 1)
+	      ;; Only process
+              (if (proc? msg)
+	        (let [chksum (ais-util/checksum (msg :en))
+		      ^long frag-count (msg :fc)]
+                  ;; The current sentence syntax has been verified and is a starting
+                  ;; fragment; if it is part of a multipart sentence consume the remaining
+                  ;; fragments otherwise process as a complete standalone senetence.
+                  (if (= chksum (msg :ck))
+                    ;; Checksum verified
+                    (if (= frag-count 1)
+                      ;; *** Single fragment sentence ***
+                      (do
+                        (async/>!! out-ch [msg])
+                        (recur dropped invalid error))
+                      ;; *** Multipart sentence, consume remaining fragments ***
+                      (let [msgs (<<multipart msg in-ch)]
+                        (async/>!! out-ch msgs)
+                        (recur dropped invalid error)))
+                    ;; Checksum failed verification
                     (do
-                      (async/>!! out-ch [line])
-                      (recur dropped invalid))
+                      (logging/error
+                        (format "Invalid message checksum %s. [expected]%s != [actual]%s" (msg :en) chksum (msg :ck)))
+                      (if (= frag-count 1)
+                        (recur dropped (inc invalid) error)
+			(do
+			  (<<multipart msg in-ch)
+                          (recur (+ dropped frag-count) invalid error))))))
+                (let [^long frag-count (msg :fc)]
+                  ;; *** Skip messages ***
+                  (if (= (msg :fc) 1)
+                    (recur (inc dropped) invalid error)
                     (do
-                      (let [lines (consume line (- n-frags 1) in-ch)]
-                        (async/>!! out-ch lines)
-                        (recur dropped invalid)))))
-		(do ;; if multipart consume the remainder of elements
-		  (let [^long n-frags (m_fc line)]
-		    (if (> n-frags 1)
-		      (do
-                        ;; parse thru skipped sentences
-			;(println (format "Skipping %s sentences" n-frags))
-		        (consume line (- n-frags 1) in-ch)
-		        (recur (+ dropped n-frags) invalid))
-                      (recur (inc dropped) invalid)))))
+                      ;(println (format "Skipping %s sentences" (msg :fc)))
+		      (<<multipart msg in-ch)
+                      (recur (+ dropped frag-count) invalid error)))))
 	      (do
-                (println (format "Multipart fragment received out or order - %s" line))))
-		;(recur (dropped) inc line)
+                (logging/warn (format "Multipart fragment received out or order - %s" line))))
+                ;(recur (dropped) inc line)
             (do
-              (logging/debug (format "Invalid message syntax: %s" line))
-              (recur dropped (inc invalid))))
+              ;(logging/error (format "Error parsing message: %s" line))
+              (recur dropped (inc invalid) (inc error))))
           (do
-            (log-metrics dropped invalid)
+            (log-metrics dropped invalid error)
             (async/close! out-ch)))))
     out-ch))
-   
-(defn- decode [format & msgs]
-  (try
-    (apply ais-core/parse-ais format (apply ais-core/verify msgs))
-    (catch Exception e
-      (logging/error e)
-      (logging/error msgs))))
 
 (defn- process [format n in-ch]
   (let [out-ch (async/chan buffer-size)
@@ -153,7 +150,7 @@
       (async/thread
         (loop [acc (transient [])]
           (if-let [msgs (async/<!! in-ch)]
-            (if-let [decoded (apply decode format msgs)]
+	    (if-let [decoded (ais-core/parse format msgs)]
               (recur (conj! acc decoded))
               (recur acc))
             (do
