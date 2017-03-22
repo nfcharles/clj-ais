@@ -14,10 +14,11 @@
     (timestamp->iso ts (f/formatter "yyyyMMddHHmmss"))))
 
 (defn checksum [msg]
-  (let [sum (Integer/toString (reduce bit-xor 0 (map int (seq msg))) 16)]
-    (if (== (count sum) 1)
-      (string/upper-case (str "0" sum))
-      (string/upper-case sum))))
+  (loop [mseq (seq msg)
+         sum 0]
+    (if-let [c (first mseq)]
+      (recur (rest mseq) (bit-xor sum (int c)))
+      (format "%02X" sum))))
 
 (defn pad [payload n-bits]
   (str payload (apply str (repeat n-bits "0"))))
@@ -25,15 +26,11 @@
 (defn bitmask [len]
   (Integer/parseInt (apply str (repeat len "1")) 2))
 
-(defn twos-comp [bit-str]
-  (->> (bit-not (Integer/parseInt bit-str 2))
-       (bit-and (bitmask (count bit-str)))
+(defn twos-comp [bits]
+  (->> (bit-not (Integer/parseInt bits 2))
+       (bit-and (bitmask (count bits)))
        (+ 1)
        (* -1)))
-
-(defn char->decimal [c]
- (let [tmp (- (int c) 48)]
-    (if (> tmp 40) (- tmp 8) tmp)))
 
 (defn payload->binary [payload]
   "Convert ais sentence payload to binary string"
