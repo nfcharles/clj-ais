@@ -33,7 +33,7 @@
 ;; ---
 
 (defmulti write-data
-  (fn [output-format & _] output-format))
+  (fn [out-format & _] out-format))
 
 
 ; clj-json impl
@@ -53,9 +53,9 @@
 (defmethod write-data :default [_ writer data]
   (write-data "csv" writer data))
 
-(defn- write [filename output-format lines]
+(defn- write [filename out-format lines]
   (with-open [writer (clojure.java.io/writer filename)]
-    (write-data output-format writer lines)))
+    (write-data out-format writer lines)))
 
 ;;---
 ;; Core
@@ -143,60 +143,73 @@
             (async/close! out-ch)))))
     out-ch))
 
-(defn- process [format n in-ch]
+(defn decode [out-format fragments]
+  (try
+    (ais-core/parse out-format fragments)
+    (catch Exception e
+      (logging/error e)
+      (logging/error fragments))))
+
+(defn- process [out-format n-threads buffer-len in-ch]
   (let [out-ch (async/chan buffer-size)
-        active-threads (atom n)]
-    (dotimes [i n]
+        active-threads (atom n-threads)]
+    (dotimes [i n-threads]
       (async/thread
-        (loop [acc (transient [])]
-          (if-let [msgs (async/<!! in-ch)]
-	    (if-let [decoded (ais-core/parse format msgs)]
-              (recur (conj! acc decoded))
-              (recur acc))
+        (loop [j 0
+	       err 0
+	       total 0
+	       acc (transient [])]
+          (if-let [fragments (async/<!! in-ch)]
+	    (if-let [msg (decode out-format fragments)]
+	      (if (< j buffer-len)
+                (recur (inc j) err total (conj! acc msg))
+		(do
+	          (async/>!! out-ch (persistent! acc))
+		  (recur 0 err (+ j total) (transient []))))
+              (recur j (inc err) total acc))
             (do
-              (logging/info (str "count.decoder.thread_" i "=" (count acc)))
-              (async/>!! out-ch (persistent! acc)))))
+	      (if (> j 0)
+	        (async/>!! out-ch (persistent! acc)))
+              (logging/info (format "count.decoder.thread_%d=%d" i (+ j total)))
+              (logging/info (format "count.decoder.err.thread_%d=%d" i err)))))
         (swap! active-threads dec)
         (if (= @active-threads 0)
           (async/close! out-ch))))
     out-ch))
 
-(defn- collect [in-ch]
-  (let [out-ch (async/chan)]
-    (async/thread
-      (loop [acc []]
-        (if-let [batch (async/<!! in-ch)]
-          (do
-            (logging/info (str "count.collector=" (count batch)))
-            (recur (conj acc batch)))
-          (async/>!! out-ch acc))))
-    out-ch))
 
-(defn- writer [output-format prefix batches]
+(defn -write [name out-format data thread-no]
+  (logging/info (format "writing %s" name))
+  (write name out-format data)
+  (logging/info (format "count.writer.thread_%s=%s" thread-no (count data))))
+
+(defn- writer [out-format prefix n in-ch]
   (let [out-ch (async/chan)
-        n (count batches)
         active-threads (atom n)
-        filename #(format "%s-part-%s.%s" %1 %2 %3)]
-    (doseq [[i batch] (map list (range n) batches)]
+	;; <prefix>-part-<thread-n>-<batch-n>.<suffix>
+        filename #(format "%s-part-%d-%d.%s" %1 %2 %3 %4)]
+    (dotimes [i n]
       (async/thread
-        (time (do
-        (logging/info (format "writing %s" (filename prefix i output-format)))
-        (write (filename prefix i output-format) output-format batch)
-        (logging/info (format "count.writer.thread_%s=%s" i (count batch)))
-        (swap! active-threads dec)
-        (when (= @active-threads 0)
-          (async/>!! out-ch :done)
-          (async/close! out-ch))))))
+        (loop [j 0]
+          (if-let [msgs (async/<!! in-ch)]
+            (do
+              (-write (filename prefix i j out-format) out-format msgs i)
+	      (recur (inc j)))
+	    (do
+              (swap! active-threads dec)
+              (when (= @active-threads 0)
+                (async/>!! out-ch :done)
+                (async/close! out-ch)))))))
     out-ch))
 
-(defn run [in-ch output-prefix include-types nthreads output-format]
+(defn run [in-ch out-prefix include-types n-threads out-format buffer-len]
   (let [out-ch (->> (filter-stream include-types in-ch)
-                    (process output-format nthreads)
-                    (collect))]
+                    (process out-format n-threads buffer-len))]
     ;; Thread macro uses daemon threads so we must explicitly block
     ;; until all writer threads are complete to prevent premature
     ;; termination of main thread.
-    (async/<!! (writer output-format output-prefix (async/<!! out-ch)))))
+    (async/<!! (writer out-format out-prefix n-threads out-ch))))
+
 
 (def stdin-reader
   (java.io.BufferedReader. *in*))
@@ -209,13 +222,14 @@
 (defn -main
   [& args]
   (try
-    (let [output-prefix (nth args 0)
+    (let [out-prefix (nth args 0)
           include-types (parse-types (nth args 1))
-          nthreads (Integer. (nth args 2))
-          output-format (nth args 3)
+          n-threads (read-string (nth args 2))
+          out-format (nth args 3)
+          buffer-len (read-string (nth args 4))
           stream (async/to-chan (line-seq stdin-reader))]
       (println (format "INCLUDE TYPES: %s" include-types))
       (configure-logging :std-err)
-      (time (run stream output-prefix include-types nthreads output-format)))
+      (time (run stream out-prefix include-types n-threads out-format buffer-len)))
     (catch Exception e
       (logging/fatal e))))

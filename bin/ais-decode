@@ -11,6 +11,7 @@ Description:
   e.g.
     ais-decode --output-format csv
                --threads 3
+               --buffer-len 75000
                /tmp/sample-input.txt
                1,2,3,4,5
                output
@@ -22,6 +23,7 @@ Description:
 Options:
  -o, --output-format <format> Output file format: 'csv' or 'json'
  -t, --threads <int>          Total count of decoding threads.
+ -b, --buffer-len <int>       Max count of messages in each output file
  -h, --help                   Show help.
 
 Required:
@@ -46,6 +48,7 @@ RELEASE_JAR=target/uberjar/ais-$BUILD_VERSION-SNAPSHOT-standalone.jar
 # Application parameters
 OUTPUT_FORMAT=json
 THREADS=1
+BUFFER_LEN=50000
 
 while [[ $# > 3 ]]; do
     key="$1"
@@ -57,7 +60,11 @@ while [[ $# > 3 ]]; do
 	    ;;
 	-t|--threads)
 	    THREADS="$2"
-	    shift 
+	    shift
+	    ;;
+	-b|--buffer-len)
+	    BUFFER_LEN="$2"
+	    shift
 	    ;;
 	*)
             # unknown option
@@ -93,9 +100,11 @@ echo "MESSAGE_TYPES=$MESSAGE_TYPES"
 echo "THREADS=$THREADS"
 echo "OUTPUT_FORMAT=$OUTPUT_FORMAT"
 echo "OUTPUT_NAME=$OUTPUT_NAME"
+echo "BUFFER_LEN=$BUFFER_LEN"
 
 java $JAVA_OPS -jar $RELEASE_JAR \
     $OUTPUT_NAME \
     $MESSAGE_TYPES \
     $THREADS \
-    $OUTPUT_FORMAT < $INPUT
+    $OUTPUT_FORMAT \
+    $BUFFER_LEN < $INPUT

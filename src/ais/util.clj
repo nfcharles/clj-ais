@@ -20,11 +20,11 @@
       (recur (rest mseq) (bit-xor sum (int c)))
       (format "%02X" sum))))
 
-(defn pad [payload n-bits]
-  (str payload (apply str (repeat n-bits "0"))))
+(defn pad [payload n]
+  (str payload (apply str (repeat n "0"))))
 
-(defn bitmask [len]
-  (Integer/parseInt (apply str (repeat len "1")) 2))
+(defn bitmask [n]
+  (Integer/parseInt (apply str (repeat n "1")) 2))
 
 (defn twos-comp [bits]
   (->> (bit-not (Integer/parseInt bits 2))
