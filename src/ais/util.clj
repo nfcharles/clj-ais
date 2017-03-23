@@ -1,46 +1,41 @@
 (ns ais.util
   (:require [clojure.string :as string])
+  (:require [clj-time.coerce :as c])
+  (:require [clj-time.format :as f])
+  (:require [ais.vocab :as ais-vocab])
   (:gen-class))
 
 (def not-nil? (complement nil?))
 
 (defn timestamp->iso 
-  ([tstamp format]
-    (->> (java.util.Date. tstamp)
-         (.format (java.text.SimpleDateFormat. format))))
-  ([tstamp]
-    (timestamp->iso tstamp "yyyyMMdd'T'HHmmss'Z'")))
+  ([^long ts formatter]
+    (f/unparse formatter (c/from-long ts)))
+  ([^long ts]
+    (timestamp->iso ts (f/formatter "yyyyMMddHHmmss"))))
 
 (defn checksum [msg]
-  (let [sum (Integer/toString (reduce bit-xor 0 (map int (seq msg))) 16)]
-    (if (== (count sum) 1)
-      (string/upper-case (str "0" sum))
-      (string/upper-case sum))))
+  (loop [mseq (seq msg)
+         sum 0]
+    (if-let [c (first mseq)]
+      (recur (rest mseq) (bit-xor sum (int c)))
+      (format "%02X" sum))))
 
-(defn pad [payload num-fill-bits]
-  (str payload (apply str (repeat num-fill-bits "0"))))
+(defn pad [payload n]
+  (str payload (apply str (repeat n "0"))))
 
-(defn bitmask [len]
-  (Integer/parseInt (apply str (repeat len "1")) 2))
+(defn bitmask [n]
+  (Integer/parseInt (apply str (repeat n "1")) 2))
 
-(defn twos-comp [bit-str]
-  (->> (bit-not (Integer/parseInt bit-str 2))
-       (bit-and (bitmask (count bit-str)))
+(defn twos-comp [bits]
+  (->> (bit-not (Integer/parseInt bits 2))
+       (bit-and (bitmask (count bits)))
        (+ 1)
        (* -1)))
 
-(defn char->decimal [c]
- (let [tmp (- (int c) 48)]
-    (if (> tmp 40) (- tmp 8) tmp)))
-
-(defn char-str->decimal [c]
-  (char->decimal (.charAt c 0)))
-
-(defn decimal->binary
-  ([num str-len]
-    (let [binary (Integer/toString num 2)
-          len (count binary)]
-      (str (->> (repeat (- str-len len) "0")
-              (apply str)) binary)))
-  ([num]
-    (decimal->binary num 6)))
+(defn payload->binary [payload]
+  "Convert ais sentence payload to binary string"
+  (loop [pseq (seq payload)
+         acc []]
+    (if-let [c (first pseq)]
+      (recur (rest pseq) (conj acc (ais-vocab/char->bits c)))
+      (apply str acc))))

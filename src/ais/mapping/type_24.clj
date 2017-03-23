@@ -1,10 +1,10 @@
 (ns ais.mapping.type_24
-  (:require [clojure.string :as string])
-  (:require [ais.vocab :as ais-vocab])
-  (:require [ais.types :as ais-types])
-  (:require [ais.util :as ais-util])
-  (:require [ais.extractors :as ais-ex])
-  (:require [ais.mapping.common :as ais-map-comm])
+  (:require [clojure.string :as string]
+            [ais.vocab :as ais-vocab]
+            [ais.types :as ais-types]
+            [ais.util :as ais-util]
+            [ais.extractors :as ais-ex]
+            [ais.mapping.common :as ais-map-comm])
   (:gen-class))
 
 
@@ -85,10 +85,8 @@
       mapping-24-b-dim)))
       
 (defn determine-24-map [bits]
-  ;(let [part-no (ais-types/u nil (subs bits 32 34))]
   (let [part-no (ais-types/u nil (subs bits 38 40))]
-    ;(println (format "part-no: %d" part-no))
-    (case part-no
+    (case (int part-no)
       0 mapping-24-a
       1 (determine-24-b-map bits)
       nil)))

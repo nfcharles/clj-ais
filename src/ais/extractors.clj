@@ -43,23 +43,38 @@
   (map read-string (ext-multi-raw regex msg)))
 
 (def -extractors (hash-map
- "g"          { :exp #"\\.*g:\d-(\d-\d+).*\\"                                :fn #(ext-raw %1 %2) }
- "n"          { :exp #"\\.*n:(\d*).*\\"                                      :fn #(ext %1 %2) }
- "c"          { :exp #"\\.*c:(\d*).*\\"                                      :fn #(ext %1 %2) }
- "t"          { :exp #"\\.*t:(\d*).*\\"                                      :fn #(ext %1 %2) }
- "s"          { :exp #"\\.*s:(\w*).*\\"                                      :fn #(ext-raw %1 %2) }
- "tags"       { :exp #"^(\\.+\\)"                                            :fn #(ext-raw %1 %2) }
- "pac-type"   { :exp #"(AIVD[MO])"                                           :fn #(ext-raw %1 %2) }
- "frag-count" { :exp #"AIVD[MO],(\d)"                                        :fn #(ext %1 %2) }
- "frag-num"   { :exp #"AIVD[MO],\d,(\d)"                                     :fn #(ext %1 %2) }
- "frag-info"  { :exp #"AIVD[MO],(\d),(\d)"                                   :fn #(ext-multi %1 %2) }
- "seq-id"     { :exp #"AIVD[MO],\d,\d,(\d?)"                                 :fn #(ext-raw %1 %2) }
+ "g"          { :exp #"\\.*g:\d-(\d-\d+).*\\"                                  :fn #(ext-raw %1 %2) }
+ "n"          { :exp #"\\.*n:(\d*).*\\"                                        :fn #(ext %1 %2) }
+ "c"          { :exp #"\\.*c:(\d*).*\\"                                        :fn #(ext %1 %2) }
+ "t"          { :exp #"\\.*t:(\d*).*\\"                                        :fn #(ext %1 %2) }
+ "s"          { :exp #"\\.*s:(\w*).*\\"                                        :fn #(ext-raw %1 %2) }
+ "tags"       { :exp #"^(\\.+\\)"                                              :fn #(ext-raw %1 %2) }
+ "pac-type"   { :exp #"(AIVD[MO])"                                             :fn #(ext-raw %1 %2) }
+ "frag-count" { :exp #"AIVD[MO],(\d)"                                          :fn #(ext %1 %2) }
+ "frag-num"   { :exp #"AIVD[MO],\d,(\d)"                                       :fn #(ext %1 %2) }
+ "frag-info"  { :exp #"AIVD[MO],(\d),(\d)"                                     :fn #(ext-multi %1 %2) }
+ "seq-id"     { :exp #"AIVD[MO],\d,\d,(\d?)"                                   :fn #(ext-raw %1 %2) }
  "radio-ch"   { :exp #"AIVD[MO],\d,\d,\d?,([AB12]?)"                           :fn #(ext-raw %1 %2) }
  "payload"    { :exp #"AIVD[MO],\d,\d,\d?,[AB12]?,(.+),"                       :fn #(ext-raw %1 %2) }
  "fill-bits"  { :exp #"AIVD[MO],\d,\d,\d?,[AB12]?,.+,(\d)"                     :fn #(ext %1 %2) }
  "checksum"   { :exp #"AIVD[MO],\d,\d,\d?,[AB12]?,.+,\d\*([A-F0-9][A-F0-9])"   :fn #(ext-raw %1 %2) }
- "env-chksum" { :exp #"(AIVD[MO],\d,\d,\d?,[AB12]?,.+,\d)\*([A-Z0-9][A-Z0-9])" :fn #(ext-multi-raw %1 %2) } ))
+ "env"        { :exp #"(AIVD[MO],\d,\d,\d?,[AB12]?,.+,\d)"                     :fn #(ext-raw %1 %2) }
+ "env-chksum" { :exp #"(AIVD[MO],\d,\d,\d?,[AB12]?,.+,\d)\*([A-Z0-9][A-Z0-9])" :fn #(ext-multi-raw %1 %2) }
+ "sentence"   { :exp #"(AIVD[MO],\d,\d,\d?,[AB12]?,.+,\d\*[A-Z0-9][A-Z0-9])"   :fn #(ext-raw %1 %2) }))
 
 (defn parse [field msg]
   (let [ex (-extractors field)]
     ((ex :fn) (ex :exp) msg)))
+
+(defn tokenize [line]
+  (if-let [sentence (parse "sentence" line)]
+    (if-let [tokens (clojure.string/split sentence #"[,*]")]
+      (if (= 8 (count tokens))
+        (hash-map
+          :tg (parse "tags" line)
+          :en (parse "env" line)
+          :fc (read-string (nth tokens 1))
+          :fn (read-string (nth tokens 2))
+          :pl (nth tokens 5)
+          :fl (read-string (nth tokens 6))
+          :ck (nth tokens 7))))))
