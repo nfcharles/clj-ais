@@ -1,10 +1,7 @@
 (ns ais.mapping.type_24
-  (:require [clojure.string :as string]
-            [ais.vocab :as ais-vocab]
+  (:require [ais.vocab :as ais-vocab]
             [ais.types :as ais-types]
-            [ais.util :as ais-util]
-            [ais.extractors :as ais-ex]
-            [ais.mapping.common :as ais-map-comm])
+            [ais.mapping.common :as common])
   (:gen-class))
 
 
@@ -37,35 +34,35 @@
 ;;;   * The 30 bits are interpreted as dimensions of the vessel
  
 (def mapping-24-a (list
-  {:len   6 :desc "Message Type"           :tag "type"         :fn (partial ais-map-comm/const 24)}
-  {:len   2 :desc "Repeat Indicator"       :tag "repeat"       :fn ais-types/u}
-  {:len  30 :desc "MMSI"                   :tag "mmsi"         :fn ais-types/u}
-  {:len   2 :desc "Part Number"            :tag "partno"       :fn ais-types/u}
-  {:len 120 :desc "Vessel Name"            :tag "shipname"     :fn (partial ais-types/t ais-vocab/sixbit-ascii 20)}
-  {:len   8 :desc "Spare"                  :tag "spare"        :fn ais-types/x}
+  {:len   6 :desc "Message Type"     :tag "type"     :fn (partial common/const 24)}
+  {:len   2 :desc "Repeat Indicator" :tag "repeat"   :fn ais-types/u}
+  {:len  30 :desc "MMSI"             :tag "mmsi"     :fn ais-types/u}
+  {:len   2 :desc "Part Number"      :tag "partno"   :fn ais-types/u}
+  {:len 120 :desc "Vessel Name"      :tag "shipname" :fn (partial ais-types/t ais-vocab/sixbit-ascii 20)}
+  {:len   8 :desc "Spare"            :tag "spare"    :fn ais-types/x}
 ))
 
 ;; last 30 bits before spare are interpreted as vessel dimensions
 (def mapping-24-b-dim (list
-  {:len   6 :desc "Message Type"           :tag "type"            :fn (partial ais-map-comm/const 24)}
-  {:len   2 :desc "Repeat Indicator"       :tag "repeat"          :fn ais-types/u}
-  {:len  30 :desc "MMSI"                   :tag "mmsi"            :fn ais-types/u}
-  {:len   2 :desc "Part Number"            :tag "partno"          :fn ais-types/u}
-  {:len   8 :desc "Ship Type"              :tag "shiptype"        :fn (partial ais-types/e ais-vocab/ship-type)}
-  {:len  18 :desc "Vendor ID"              :tag "vendorid"        :fn (partial ais-types/t ais-vocab/sixbit-ascii 3)}
-  {:len   4 :desc "Unit Model Code"        :tag "model"           :fn ais-types/u}
-  {:len  20 :desc "Serial Number"          :tag "serial"          :fn ais-types/u}
-  {:len  42 :desc "Call Sign"              :tag "callsign"        :fn (partial ais-types/t ais-vocab/sixbit-ascii 7)}
-  {:len   9 :desc "Dimension to Bow"       :tag "to_bow"          :fn ais-types/u}
-  {:len   9 :desc "Dimension to Stern"     :tag "to_stern"        :fn ais-types/u}
-  {:len   6 :desc "Dimension to Port"      :tag "to_port"         :fn ais-types/u}
-  {:len   6 :desc "Dimension to Starboard" :tag "to_starboard"    :fn ais-types/u}  
-  {:len   6 :desc "Spare"                  :tag "spare"           :fn ais-types/x}
+  {:len   6 :desc "Message Type"           :tag "type"         :fn (partial common/const 24)}
+  {:len   2 :desc "Repeat Indicator"       :tag "repeat"       :fn ais-types/u}
+  {:len  30 :desc "MMSI"                   :tag "mmsi"         :fn ais-types/u}
+  {:len   2 :desc "Part Number"            :tag "partno"       :fn ais-types/u}
+  {:len   8 :desc "Ship Type"              :tag "shiptype"     :fn (partial ais-types/e ais-vocab/ship-type)}
+  {:len  18 :desc "Vendor ID"              :tag "vendorid"     :fn (partial ais-types/t ais-vocab/sixbit-ascii 3)}
+  {:len   4 :desc "Unit Model Code"        :tag "model"        :fn ais-types/u}
+  {:len  20 :desc "Serial Number"          :tag "serial"       :fn ais-types/u}
+  {:len  42 :desc "Call Sign"              :tag "callsign"     :fn (partial ais-types/t ais-vocab/sixbit-ascii 7)}
+  {:len   9 :desc "Dimension to Bow"       :tag "to_bow"       :fn ais-types/u}
+  {:len   9 :desc "Dimension to Stern"     :tag "to_stern"     :fn ais-types/u}
+  {:len   6 :desc "Dimension to Port"      :tag "to_port"      :fn ais-types/u}
+  {:len   6 :desc "Dimension to Starboard" :tag "to_starboard" :fn ais-types/u}
+  {:len   6 :desc "Spare"                  :tag "spare"        :fn ais-types/x}
 ))
 
 ;; last 30 bits before spare are interpreted as vessel parent mmsi
 (def mapping-24-b-mmsi (list
-  {:len   6 :desc "Message Type"           :tag "type"            :fn (partial ais-map-comm/const 24)}
+  {:len   6 :desc "Message Type"           :tag "type"            :fn (partial common/const 24)}
   {:len   2 :desc "Repeat Indicator"       :tag "repeat"          :fn ais-types/u}
   {:len  30 :desc "MMSI"                   :tag "mmsi"            :fn ais-types/u}
   {:len   2 :desc "Part Number"            :tag "partno"          :fn ais-types/u}

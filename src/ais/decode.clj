@@ -5,12 +5,10 @@
             [ais.mapping.core :as ais-map]
             [ais.core :as ais-core]
             [clojure.core.async :as async]
-            ;[clojure.data.json :as json]
             [clojure.data.csv :as csv]
             [clojure.pprint :as pprint]
             [clojure.stacktrace :as strace]
             [clj-json.core :as json]
-            ;[pjson.core :as json]
             [taoensso.timbre :as logging]
             [taoensso.timbre.appenders.core :as appenders])
   (:gen-class))
@@ -32,30 +30,19 @@
 ;; Writers
 ;; ---
 
-(defmulti write-data
-  (fn [out-format & _] out-format))
-
-
-; clj-json impl
-(defmethod write-data "json" [_ writer data ]
+(defn json-write [writer data ]
   (.write writer (json/generate-string data)))
 
-
-; pjson impl
-(comment
-(defmethod write-data "json" [_ writer data ]
-  (.write writer (json/write-str data)))
-)
-
-(defmethod write-data "csv" [_ writer data]
+(defn csv-write [writer data]
   (csv/write-csv writer data))
 
-(defmethod write-data :default [_ writer data]
-  (write-data "csv" writer data))
+(def writer-proxy (hash-map
+ "json" json-write
+ "csv"  csv-write))
 
 (defn- write [filename out-format lines]
   (with-open [writer (clojure.java.io/writer filename)]
-    (write-data out-format writer lines)))
+    ((writer-proxy out-format) writer lines)))
 
 ;;---
 ;; Core
@@ -63,9 +50,6 @@
 
 (defn- parse-types [types]
   (into #{} (map read-string (clojure.string/split types #","))))
-
-(defn- extract-type [payload]
-  (ais-vocab/char-str->dec (subs payload 0 1)))
 
 (defn- consume [base n ch]
   (loop [i n
@@ -79,26 +63,24 @@
 (defn <<multipart [msg ch]
   (consume msg (- (msg :fc) 1) ch))
 
-(defn- process? [include-types msg]
-  (contains? include-types (extract-type (msg :pl))))
-
-(defn- log-metrics [dropped invalid error]
+(defn- log-metrics [dropped invalid error histogram]
   (logging/info (format "count.dropped.total=%d" dropped))
   (logging/info (format "count.invalid.total=%d" invalid))
-  (logging/info (format "count.error.total=%d" error)))
+  (logging/info (format "count.error.total=%d" error))
+  (doseq [[k v] histogram]
+    (logging/info (format "count.dropped.type-%d=%d" k v))))
 
 (defn- filter-stream [include-types in-ch]
-  (let [out-ch (async/chan buffer-size)
-	proc? (partial process? include-types)]
+  (let [out-ch (async/chan buffer-size)]
     (async/thread
       (loop [dropped 0
              invalid 0
-	     error   0]
+	     error   0
+	     hist (transient [])]
 	(if-let [line (async/<!! in-ch)]
           (if-let [msg (ais-ex/tokenize line)]
             (if (= (msg :fn) 1)
-	      ;; Only process
-              (if (proc? msg)
+              (if (contains? include-types (msg :ty))
 	        (let [chksum (ais-util/checksum (msg :en))
 		      ^long frag-count (msg :fc)]
                   ;; The current sentence syntax has been verified and is a starting
@@ -110,36 +92,36 @@
                       ;; *** Single fragment sentence ***
                       (do
                         (async/>!! out-ch [msg])
-                        (recur dropped invalid error))
+                        (recur dropped invalid error hist))
                       ;; *** Multipart sentence, consume remaining fragments ***
                       (let [msgs (<<multipart msg in-ch)]
                         (async/>!! out-ch msgs)
-                        (recur dropped invalid error)))
+                        (recur dropped invalid error hist)))
                     ;; Checksum failed verification
                     (do
                       (logging/error
                         (format "Invalid message checksum %s. [expected]%s != [actual]%s" (msg :en) chksum (msg :ck)))
                       (if (= frag-count 1)
-                        (recur dropped (inc invalid) error)
+                        (recur dropped (inc invalid) error hist)
 			(do
 			  (<<multipart msg in-ch)
-                          (recur (+ dropped frag-count) invalid error))))))
+                          (recur (+ dropped frag-count) invalid error hist))))))
                 (let [^long frag-count (msg :fc)]
                   ;; *** Skip messages ***
                   (if (= (msg :fc) 1)
-                    (recur (inc dropped) invalid error)
+                    (recur (inc dropped) invalid error (conj! hist (msg :ty)))
                     (do
                       ;(println (format "Skipping %s sentences" (msg :fc)))
 		      (<<multipart msg in-ch)
-                      (recur (+ dropped frag-count) invalid error)))))
+                      (recur (+ dropped frag-count) invalid error (conj! hist (msg :ty)))))))
 	      (do
                 (logging/warn (format "Multipart fragment received out or order - %s" line))))
                 ;(recur (dropped) inc line)
             (do
               ;(logging/error (format "Error parsing message: %s" line))
-              (recur dropped (inc invalid) (inc error))))
+              (recur dropped (inc invalid) (inc error) hist)))
           (do
-            (log-metrics dropped invalid error)
+            (log-metrics dropped invalid error (frequencies (persistent! hist)))
             (async/close! out-ch)))))
     out-ch))
 
