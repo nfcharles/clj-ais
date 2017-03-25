@@ -22,35 +22,24 @@
 ; msg_s                                      msg_e
 
 
-
-(defmulti data-collector 
-  (fn [data-format] data-format))
-
-(defmethod data-collector "json" [_]
-  [(transient {}) #(assoc! %1 %2 %3)])
-
-(defmethod data-collector "csv" [_]
-  [(transient []) #(conj! %1 %3)])
-
-(defmethod data-collector :default [_]
-  (data-collector "csv"))
-
-(def tags ["c" "s" "n"])
-
-(defn -parse [data-format tag-block payload fill-bits]
-  "Decodes complete ais message"
-  (let [[acc collector] (data-collector data-format)
-        bits (ais-util/pad (ais-util/payload->binary payload) fill-bits)]
-    (ais-map/parse-binary (ais-map/parsing-rules bits)
-                          (ais-map/parse-tag-block acc collector tags (if (nil? tag-block) "" tag-block))
-                          collector bits)))
+(defn payload [n frags]
+  (if (= n 1)
+    ((nth frags 0) :pl)
+    (loop [i 0
+           acc []]
+      (if (< i n)
+        (recur (inc i) (conj acc ((nth frags i) :pl)))
+        (apply str acc)))))
 
 (defn parse [data-format frags]
   "Organize sentence fragments for parsing"
-  (-parse data-format
-          ((first frags) :tg)
-          (reduce str (map #(%1 :pl) frags))
-          ((last frags) :fl)))
+  (let [n (count frags)
+        lead (nth frags 0)]
+    (ais-map/parse data-format
+                   (lead :ty)
+                   (lead :tg)
+		   (payload n frags)
+                   ((nth frags (- n 1)) :fl))))
 
 ;;---
 ;; Entrypoint

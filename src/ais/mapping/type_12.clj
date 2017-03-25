@@ -1,12 +1,12 @@
 (ns ais.mapping.type_12
-  (:require [ais.types :as ais-types])
-  (:require [ais.vocab :as ais-vocab])
-  (:require [ais.mapping.common :as ais-map-comm])
+  (:require [ais.types :as ais-types]
+            [ais.vocab :as ais-vocab]
+            [ais.mapping.common :as common])
   (:gen-class))
 
 
 (def mapping-12 (list
-  {:len        6 :desc "Message Type"     :tag "type"       :fn (partial ais-map-comm/const 12)}
+  {:len        6 :desc "Message Type"     :tag "type"       :fn (partial common/const 12)}
   {:len        2 :desc "Repeat Indicator" :tag "repeat"     :fn ais-types/u}
   {:len       30 :desc "Source MMSI"      :tag "mmsi"       :fn ais-types/u}
   {:len        2 :desc "Sequence Number"  :tag "seqno"      :fn ais-types/u}

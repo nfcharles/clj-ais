@@ -1,15 +1,12 @@
 (ns ais.mapping.type_5
-  (:require [clojure.string :as string])
-  (:require [ais.vocab :as ais-vocab])
-  (:require [ais.types :as ais-types])
-  (:require [ais.util :as ais-util])
-  (:require [ais.extractors :as ais-ex])
-  (:require [ais.mapping.common :as ais-map-comm])
+  (:require [ais.vocab :as ais-vocab]
+            [ais.types :as ais-types]
+            [ais.mapping.common :as common])
   (:gen-class))
 
 
 (def mapping-5 (list
-  {:len   6 :desc "Message Type"           :tag "type"         :fn (partial ais-map-comm/const 5)}
+  {:len   6 :desc "Message Type"           :tag "type"         :fn (partial common/const 5)}
   {:len   2 :desc "Repeat Indicator"       :tag "repeat"       :fn ais-types/u}
   {:len  30 :desc "MMSI"                   :tag "mmsi"         :fn ais-types/u}
   {:len   2 :desc "AIS Version"            :tag "ais_version"  :fn ais-types/u}

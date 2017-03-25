@@ -35,7 +35,7 @@
 (defn payload->binary [payload]
   "Convert ais sentence payload to binary string"
   (loop [pseq (seq payload)
-         acc []]
+         acc (transient [])]
     (if-let [c (first pseq)]
-      (recur (rest pseq) (conj acc (ais-vocab/char->bits c)))
-      (apply str acc))))
+      (recur (rest pseq) (conj! acc (ais-vocab/char->bits c)))
+      (apply str (persistent! acc)))))

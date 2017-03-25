@@ -1,4 +1,5 @@
 (ns ais.extractors
+  (:require [ais.vocab :as ais-vocab])
   (:gen-class))
 
 ;;;
@@ -70,11 +71,13 @@
   (if-let [sentence (parse "sentence" line)]
     (if-let [tokens (clojure.string/split sentence #"[,*]")]
       (if (= 8 (count tokens))
-        (hash-map
-          :tg (parse "tags" line)
-          :en (parse "env" line)
-          :fc (read-string (nth tokens 1))
-          :fn (read-string (nth tokens 2))
-          :pl (nth tokens 5)
-          :fl (read-string (nth tokens 6))
-          :ck (nth tokens 7))))))
+        (let [payload (nth tokens 5)]
+          (hash-map
+            :ty (ais-vocab/char-str->dec (subs payload 0 1))
+            :tg (parse "tags" line)
+            :en (parse "env" line)
+            :fc (read-string (nth tokens 1))
+            :fn (read-string (nth tokens 2))
+            :pl payload
+            :fl (read-string (nth tokens 6))
+            :ck (nth tokens 7)))))))
