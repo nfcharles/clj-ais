@@ -50,4 +50,4 @@
   [& args]
   (let [data-format (nth args 0)
         message (nth args 1)]
-   (println (json/write-str (parse data-format message)))))
+   (println (json/write-str (parse data-format [(ais-ex/tokenize message)])))))

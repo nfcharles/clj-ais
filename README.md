@@ -1,35 +1,87 @@
 # clj-ais
 
-clj-ais is an AIS (Automatic Identification System) message decoding library built according to the following spec
+clj-ais is an AIS (Automatic Identification System) message decoding library adhering to the following de facto standard:
   - http://catb.org/gpsd/AIVDM.html
 
 Decoded messages were validated against the following online decoder
   - http://www.aggsoft.com/ais-decoder.htm
 
-#### Supported Types
-| Type | Description                           |
-| ---- | --------------------------------------|
-|  1   | Position Report Class A               |
-|  2   | Position Report Class A               |
-|  3   | Position Report Class A               |
-|  4   | Base Station Report                   |
-|  5   | Static and Voyage Related Data        |
-|  7   | Binary Acknowledge                    |
-|  9   | Standard SAR Aircraft Position Report |
-| 10   | UTC/Date Inquiry                      |
-| 12   | Addressed Safety-Related Message      |
-| 14   | Safety-Related Broadcast Message      |
-| 18   | Standard Class B CS Position Report   |
-| 19   | Extended Class B CS Position Report   |
-| 21   | Aid-to-Navigation Report              |
-| 20   | Data Link Management Message          |
-| 24   | Static Data Report                    |
+### Supported Types
+| Type | Description                           | Implemented | *Tested |
+| ---- | --------------------------------------|-------------|---------|
+|  1   | Position Report Class A               |      x      |    x    |
+|  2   | Position Report Class A               |      x      |    x    |
+|  3   | Position Report Class A               |      x      |    x    |
+|  4   | Base Station Report                   |      x      |    x    |
+|  5   | Static and Voyage Related Data        |      x      |    x    |
+|  **6 | Binary Addressed Message              |      x      |    x    |
+|  7   | Binary Acknowledge                    |      x      |         |
+|  8   | Binary Broadcast Message              |             |         |
+|  9   | Standard SAR Aircraft Position Report |      x      |         |
+| 10   | UTC/Date Inquiry                      |      x      |         |
+| 11   | UTC/Date Response                     |             |         |
+| 12   | Addressed Safety-Related Message      |      x      |         |
+| 13   | Safety-Related Acknowledgement        |             |         |
+| 14   | Safety-Related Broadcast Message      |      x      |         |
+| 15   | Interrogation                         |             |         |
+| 16   | Assingment Mode Command               |             |         |
+| 17   | DGNSS Binary Broadcast Message        |             |         |
+| 18   | Standard Class B CS Position Report   |      x      |    x    |
+| 19   | Extended Class B CS Position Report   |      x      |    x    |
+| 20   | Data Link Management Message          |      x      |         |
+| 21   | Aid-to-Navigation Report              |      x      |         |
+| 22   | Channel Management                    |             |         |
+| 23   | Group Assignment Command              |             |         |
+| 24   | Static Data Report                    |      x      |    x    |
+| 25   | Single Slot Binary Message            |             |         |
+| 26   | Multi Slot Bin Message w/ Comm State  |             |         |
+| 27   | Position Report For Long-Range Apps   |             |         |
+<sub>** generic type implemented.  binary data is not decoded</sub>
 
-Adding additional types is simple; See _Extending_ for more information about extending type support.
+#### Type 6 subtypes
+| DAC  | FID | Description                  | Implemented | *Tested |
+|------|-----|------------------------------|-------------|---------|
+|   1  | 12  | Dangerous cargo indication   |             |         |
+|   1  | 14  | Tidal window                 |             |         |
+|   1  | 16  | Number of persons on board   |             |         |
+|   1  | 18  | Clearance time to enter port |             |         |
+|   1  | 20  | Berthing data (addressed)    |             |         |
+|   1  | 23  | Area notice (addressed)      |             |         |
+|   1  | 25  | Dangerous cargo indication   |             |         |
+|   1  | 28  | Route info addressed         |             |         |
+|   1  | 30  | Text description addressed   |             |         |
+|   1  | 32  | Tidal window                 |             |         |
+| 200  | 21  | ETA at lock/bridge/terminal  |             |         |
+| 200  | 22  | RTA at lock/bridge/termina   |             |         |
+| 200  | 55  | Number of persons on board   |             |         |
+| 235  | 10  | AtoN monitoring data (UK)    |             |         |
+| 250  | 10  | AtoN monitoring data (ROI)   |             |         |
+
+#### Type 8 subtypes
+| DAC     | FID | Description                         | Implemented | *Tested |
+|---------|-----|-------------------------------------|-------------|---------|
+|       1 |  11 | Meteorological/Hydrological Data    |             |         |
+|       1 |  13 | Fairway closed                      |             |         |
+|       1 |  15 | Extended ship and voyage            |             |         |
+|       1 |  17 | VTS-Generated/Synthetic targets     |             |         |
+|       1 |  19 | Marine traffic signals              |             |         |
+|       1 |  21 | Weather observation from ship       |             |         |
+|       1 |  22 | Area notice (broadcast)             |             |         |
+|       1 |  24 | Extended ship and voyage            |             |         |
+|       1 |  26 | Environmental                       |             |         |
+|       1 |  27 | Route info broadcast                |             |         |
+|       1 |  29 | Text description broadcast          |             |         |
+|       1 |  31 | Meteorological and hydrological     |             |         |
+|     200 |  10 | Ship static and voyage related data |             |         |
+|     200 |  23 | EMMA warning report                 |             |         |
+|     200 |  24 | Water levels                        |             |         |
+|     200 |  40 | Signal status                       |             |         |
+
+<sub>*Tested: This refers to live testing against actual AIS sentences.</sub>
 
 ## Installation
 
-clj-ais is not available in public clojure repos yet.  Fork repo and build.
+Fork repo and build.
 
 ```bash
 $ cd /path/to/clj-ais
@@ -113,51 +165,10 @@ Run integration tests
 
     $ lein test ais.integration.type_1-test
 
-## Extending
-
-Field mapping configurations are used to decode sentences.  The data structure is a list of maps where each map represents all the components necessary to decode an unpacked bitfield.
-
-```clojure
-(def mapping-5 (list
-  {:len   6 :desc "Message Type"           :tag "type"         :fn (partial ais-map-comm/const 5)}
-  {:len   2 :desc "Repeat Indicator"       :tag "repeat"       :fn ais-types/u}
-  {:len  30 :desc "MMSI"                   :tag "mmsi"         :fn ais-types/u}
-  {:len   2 :desc "AIS Version"            :tag "ais_version"  :fn ais-types/u}
-  {:len  30 :desc "IMO Number"             :tag "imo"          :fn ais-types/u}
-  {:len  42 :desc "Call Sign"              :tag "callsign"     :fn (partial ais-types/t ais-vocab/sixbit-ascii 7)}
-  {:len 120 :desc "Vessel Name"            :tag "shipname"     :fn (partial ais-types/t ais-vocab/sixbit-ascii 20)}
-  {:len   8 :desc "Ship Type"              :tag "shiptype"     :fn (partial ais-types/e ais-vocab/ship-type)}
-  {:len   9 :desc "Dimension to Bow"       :tag "to_bow"       :fn ais-types/u}
-  {:len   9 :desc "Dimension to Stern"     :tag "to_stern"     :fn ais-types/u}
-  {:len   6 :desc "Dimension to Port"      :tag "to_port"      :fn ais-types/u}
-  {:len   6 :desc "Dimension to Starboard" :tag "to_starboard" :fn ais-types/u}
-  {:len   4 :desc "Position Fix Type"      :tag "epfd"         :fn (partial ais-types/e ais-vocab/position-fix-type)}
-  {:len   4 :desc "ETA month (UTC)"        :tag "month"        :fn ais-types/u}
-  {:len   5 :desc "ETA day (UTC)"          :tag "day"          :fn ais-types/u}
-  {:len   5 :desc "ETA hour (UTC)"         :tag "hour"         :fn ais-types/u}
-  {:len   6 :desc "ETA minute (UTC)"       :tag "minute"       :fn ais-types/u}
-  {:len   8 :desc "Draught"                :tag "draught"      :fn (partial ais-types/U (/ 1.0 10) 1)}
-  {:len 120 :desc "Destination"            :tag "destination"  :fn (partial ais-types/t ais-vocab/sixbit-ascii 20)}
-  {:len   1 :desc "DTE"                    :tag "dte"          :fn ais-types/b}
-  {:len   1 :desc "Spare"                  :tag "spare"        :fn ais-types/x}
-))
-
-```
-
-The following represents an unpacked sentence payload for a type 1 message: (```177KQJ5000G?tO\`K>RA1wUbN0TKH```):
-```bash
-000011100001010100111001100000000000000010001101000111110010100001101000010000011101001011100000000000000001010001001000000100111001001100100000000101011100101100000000000000000000000000000000000000000000000000000000000000000001001111000001111010000000001011001011000110101111001111000000001111100010010101000001010000011000001000000001110100100001010001
-```
-The ```:len``` field in the field specification map is the number of bits representing the particular field.
-
-Adding support for a new message type requires creating a new field mapping configuration with properly implemented field deserializers ```:fn```.  See http://catb.org/gpsd/AIVDM.html#_ais_payload_interpretation for more information.  Finally, you must extend the ```ais-mapping/parsing-rules``` multimethod in order to register the new mapping.
-
-```clojure
-;; Type 25 decoding specification
-(defmethod parsing-rules 25 [bits] mapping-25)
-```
-
 ## TODO
+
+### Implementation
+- Implement remaining types
 
 ### Testing
 - More unit tests

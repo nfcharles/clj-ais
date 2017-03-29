@@ -23,12 +23,9 @@
 (defn pad [payload n]
   (str payload (apply str (repeat n "0"))))
 
-(defn bitmask [n]
-  (Integer/parseInt (apply str (repeat n "1")) 2))
-
 (defn twos-comp [bits]
   (->> (bit-not (Integer/parseInt bits 2))
-       (bit-and (bitmask (count bits)))
+       (bit-and (ais-vocab/bitmask (count bits)))
        (+ 1)
        (* -1)))
 

@@ -50,7 +50,6 @@
              (conj w (e vocab rcrd (subs b 0 6))))
       (string/replace (apply str w) #"\s*(?:[@]*)?\s*$" ""))))
         
-
 (defn x [rcrd bits]
   "Parses bits into spare of reserve bits (noop)."
   bits)
@@ -58,7 +57,6 @@
 (defn d [rcrd bits]
   "Data bits - uninterpreted binary (noop)."
   bits)
-
 
 (defn array-bit-len [max-size len rcrd bits]
   "Returns length of array bitfield.  The count of elements in the
@@ -91,5 +89,5 @@
       (let [bit-fld (subs bts 0 len)]
         (recur (dec i)
                (subs bts len)
-               (conj acc (parser (mapper bit-fld) {} collector bit-fld))))
+               (conj acc (parser (mapper bit-fld) (transient {}) collector bit-fld))))
       acc)))
