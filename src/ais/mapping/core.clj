@@ -12,6 +12,7 @@
             [ais.mapping.type_7  :as type_7]
             [ais.mapping.type_9  :as type_9]
             [ais.mapping.type_10 :as type_10]
+            [ais.mapping.type_11 :as type_11]
             [ais.mapping.type_12 :as type_12]
             [ais.mapping.type_14 :as type_14]
             [ais.mapping.type_18 :as type_18]
@@ -64,6 +65,7 @@
     7 type_7/mapping-7
     9 type_9/mapping-9
    10 type_10/mapping-10
+   11 type_11/mapping-11
    12 type_12/mapping-12
    14 type_14/mapping-14
    18 type_18/mapping-18
