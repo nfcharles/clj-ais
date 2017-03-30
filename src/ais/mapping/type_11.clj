@@ -1,11 +1,11 @@
-(ns ais.mapping.type_4
+(ns ais.mapping.type_11
   (:require [ais.vocab :as ais-vocab]
             [ais.types :as ais-types]
             [ais.mapping.common :as common])
   (:gen-class))
 
-(def mapping-4 (list
-  {:len  6 :desc "Message Type"           :tag "type"     :fn (partial common/const 4)}
+(def mapping-11 (list
+  {:len  6 :desc "Message Type"           :tag "type"     :fn (partial common/const 11)}
   {:len  2 :desc "Repeat Indicator"       :tag "repeat"   :fn ais-types/u}
   {:len 30 :desc "MMSI"                   :tag "mmsi"     :fn ais-types/u}
   {:len 14 :desc "Year (UTC)"             :tag "year"     :fn ais-types/u}

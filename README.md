@@ -19,7 +19,7 @@ Decoded messages were validated against the following online decoder
 |  8   | Binary Broadcast Message              |             |         |
 |  9   | Standard SAR Aircraft Position Report |      x      |         |
 | 10   | UTC/Date Inquiry                      |      x      |         |
-| 11   | UTC/Date Response                     |             |         |
+| 11   | UTC/Date Response                     |      x      |    x    |
 | 12   | Addressed Safety-Related Message      |      x      |         |
 | 13   | Safety-Related Acknowledgement        |             |         |
 | 14   | Safety-Related Broadcast Message      |      x      |         |
@@ -36,6 +36,7 @@ Decoded messages were validated against the following online decoder
 | 25   | Single Slot Binary Message            |             |         |
 | 26   | Multi Slot Bin Message w/ Comm State  |             |         |
 | 27   | Position Report For Long-Range Apps   |             |         |
+
 <sub>** generic type implemented.  binary data is not decoded</sub>
 
 #### Type 6 subtypes
