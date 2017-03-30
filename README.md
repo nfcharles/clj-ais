@@ -21,7 +21,7 @@ Decoded messages were validated against the following online decoder
 | 10   | UTC/Date Inquiry                      |      x      |         |
 | 11   | UTC/Date Response                     |      x      |    x    |
 | 12   | Addressed Safety-Related Message      |      x      |         |
-| 13   | Safety-Related Acknowledgement        |             |         |
+| 13   | Safety-Related Acknowledgement        |      x      |         |
 | 14   | Safety-Related Broadcast Message      |      x      |         |
 | 15   | Interrogation                         |             |         |
 | 16   | Assingment Mode Command               |             |         |
