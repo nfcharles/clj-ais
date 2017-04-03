@@ -57,7 +57,7 @@
                (collector a (fld :tag) (if (nil? value) nil ((fld :fn) value)))))
       a)))
 
-(defn parsing-rules [msg-type bits]
+(defn field-parsers [msg-type bits]
   (case (int msg-type)
     1 type_1_2_3/mapping-1
     2 type_1_2_3/mapping-2
@@ -87,6 +87,6 @@
   "Decodes complete ais message"
   (let [[acc collector] (collectors data-format)
         bits (ais-util/pad (ais-util/payload->binary payload) fill)]
-    (common/parse-binary (parsing-rules msg-type bits)
+    (common/parse-binary (field-parsers msg-type bits)
                          (parse-tags (acc) collector tags (if (nil? tag-block) "" tag-block))
                          collector bits)))

@@ -81,14 +81,15 @@
 ))
 
 (defn field-mapper [bits]
-  (let [map-id (ais-types/u nil (subs bits 0 3))]
-    (condp = map-id
+  (let [shape-id (ais-types/u nil (subs bits 0 3))]
+    (case (int shape-id)
       0 circle_or_point
       1 rectangle
       2 sector
       3 polyline
       4 polygon
-      5 associated-text)))
+      5 associated-text
+      (throw (java.lang.Exception (format "Unknown shape-id: %d" shape-id))))))
 
 (def bits-len (partial ais-types/array-bit-len 10 87))
 

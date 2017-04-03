@@ -7,21 +7,6 @@
   (:gen-class))
 
 
-; message:   entire transmission
-; mdata:     tag blocks
-; envelope:  ais AVIDM, AVIDO sentence
-; payload:   encoded data payload
-;
-; |------------------------------------------|
-; | mdata |      |         |       |         |
-; |------------------------------------------|
-; ^       ^      ^         ^       ^         ^
-; |       |      |         |       |         |
-; |       |      pay_s     pay_e   |         |
-; |       env_s                    env_e     |
-; msg_s                                      msg_e
-
-
 (defn payload [n frags]
   (if (= n 1)
     ((nth frags 0) :pl)

@@ -67,7 +67,7 @@
   (logging/info (format "count.dropped.total=%d" dropped))
   (logging/info (format "count.invalid.total=%d" invalid))
   (logging/info (format "count.error.total=%d" error))
-  (doseq [[k v] histogram]
+  (doseq [[k v] (sort histogram)]
     (logging/info (format "count.dropped.type-%d=%d" k v))))
 
 (defn- filter-stream [include-types in-ch]
