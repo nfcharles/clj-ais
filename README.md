@@ -30,7 +30,7 @@ Decoded messages were validated against the following online decoder
 | 19   | Extended Class B CS Position Report   |      x      |    x    |
 | 20   | Data Link Management Message          |      x      |         |
 | 21   | Aid-to-Navigation Report              |      x      |         |
-| 22   | Channel Management                    |             |         |
+| 22   | Channel Management                    |      x      |    x    |
 | 23   | Group Assignment Command              |             |         |
 | 24   | Static Data Report                    |      x      |    x    |
 | 25   | Single Slot Binary Message            |             |         |
