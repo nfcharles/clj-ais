@@ -4,9 +4,9 @@
 
 (defn const [c & _] c)
 
-(def x-scale  600000000) ;; 1/10
-(def l-scale   60000000) ;; 1/100
-(def m-scale    6000000) ;; 1/1000
+(def x-scale        600) ;; 1/10
+(def l-scale       6000) ;; 1/100
+(def m-scale      60000) ;; 1/1000
 (def s-scale     600000) ;; 1/10000
 
 (def lon (partial ais-types/I (/ 1.0 s-scale) 4))

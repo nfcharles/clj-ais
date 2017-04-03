@@ -16,6 +16,7 @@
             [ais.mapping.type_12 :as type_12]
             [ais.mapping.type_13 :as type_13]
             [ais.mapping.type_14 :as type_14]
+            [ais.mapping.type_17 :as type_17]
             [ais.mapping.type_18 :as type_18]
             [ais.mapping.type_19 :as type_19]
             [ais.mapping.type_20 :as type_20]
@@ -70,6 +71,7 @@
    12 type_12/mapping-12
    13 type_13/mapping-13
    14 type_14/mapping-14
+   17 type_17/mapping-17
    18 type_18/mapping-18
    19 type_19/mapping-19
    20 type_20/mapping-20
