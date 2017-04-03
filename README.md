@@ -42,21 +42,21 @@ Decoded messages were validated against the following online decoder
 #### Type 6 subtypes
 | DAC  | FID | Description                  | Implemented | *Tested |
 |------|-----|------------------------------|-------------|---------|
-|   1  | 12  | Dangerous cargo indication   |             |         |
-|   1  | 14  | Tidal window                 |             |         |
-|   1  | 16  | Number of persons on board   |             |         |
-|   1  | 18  | Clearance time to enter port |             |         |
+|   1  | 12  | Dangerous cargo indication   |      x      |         |
+|   1  | 14  | Tidal window                 |      x      |         |
+|   1  | 16  | Number of persons on board   |      x      |         |
+|   1  | 18  | Clearance time to enter port |      x      |         |
 |   1  | 20  | Berthing data (addressed)    |             |         |
-|   1  | 23  | Area notice (addressed)      |             |         |
+|   1  | 23  | Area notice (addressed)      |      x      |         |
 |   1  | 25  | Dangerous cargo indication   |             |         |
 |   1  | 28  | Route info addressed         |             |         |
 |   1  | 30  | Text description addressed   |             |         |
 |   1  | 32  | Tidal window                 |             |         |
-| 200  | 21  | ETA at lock/bridge/terminal  |             |         |
-| 200  | 22  | RTA at lock/bridge/termina   |             |         |
-| 200  | 55  | Number of persons on board   |             |         |
-| 235  | 10  | AtoN monitoring data (UK)    |             |         |
-| 250  | 10  | AtoN monitoring data (ROI)   |             |         |
+| 200  | 21  | ETA at lock/bridge/terminal  |      x      |         |
+| 200  | 22  | RTA at lock/bridge/termina   |      x      |         |
+| 200  | 55  | Number of persons on board   |      x      |         |
+| 235  | 10  | AtoN monitoring data (UK)    |      x      |         |
+| 250  | 10  | AtoN monitoring data (ROI)   |      x      |         |
 
 #### Type 8 subtypes
 | DAC     | FID | Description                         | Implemented | *Tested |

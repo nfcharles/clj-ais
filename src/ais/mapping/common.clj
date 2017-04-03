@@ -8,6 +8,10 @@
 
 (def lat (partial ais-types/I (/ 1.0 600000) 4))
 
+(def slon (partial ais-types/I (/ 1.0 6000000) 3))
+
+(def slat (partial ais-types/I (/ 1.0 6000000) 3))
+
 (def speed (partial ais-types/U (/ 1.0 10) 1))
 
 (defn parse-binary [fields acc collector bits]

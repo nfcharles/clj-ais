@@ -21,5 +21,5 @@
   {:len        2 :desc "Repeat Indicator" :tag "repeat" :fn ais-types/u}
   {:len       30 :desc "Source MMSI"      :tag "mmsi"   :fn ais-types/u}
   {:len        2 :desc "Spare"            :tag "spare"  :fn ais-types/x}
-  {:len bits-len :desc "MMSI's"           :tag "mmsis"  :fn seq-handler :a true}
+  {:len bits-len :desc "MMSIs "           :tag "mmsis"  :fn seq-handler :a true}
 ))

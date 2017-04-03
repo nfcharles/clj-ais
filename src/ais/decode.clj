@@ -115,8 +115,8 @@
 		      (<<multipart msg in-ch)
                       (recur (+ dropped frag-count) invalid error (conj! hist (msg :ty)))))))
 	      (do
-                (logging/warn (format "Multipart fragment received out or order - %s" line))))
-                ;(recur (dropped) inc line)
+                (logging/warn (format "Multipart fragment received out or order - %s" line))
+                (recur dropped (inc invalid) (inc error) hist)))
             (do
               ;(logging/error (format "Error parsing message: %s" line))
               (recur dropped (inc invalid) (inc error) hist)))

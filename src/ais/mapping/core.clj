@@ -8,7 +8,7 @@
             [ais.mapping.type_1_2_3 :as type_1_2_3]
             [ais.mapping.type_4  :as type_4]
             [ais.mapping.type_5  :as type_5]
-            [ais.mapping.type_6  :as type_6]
+            [ais.mapping.type_6.core :as type_6]
             [ais.mapping.type_7  :as type_7]
             [ais.mapping.type_9  :as type_9]
             [ais.mapping.type_10 :as type_10]
