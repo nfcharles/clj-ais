@@ -1,4 +1,4 @@
-(ns ais.mapping.type_6.f1d23
+(ns ais.mapping.type_6.d1f23
   (:require [ais.vocab :as ais-vocab]
             [ais.types :as ais-types]
             [ais.mapping.common :as common])
@@ -53,7 +53,7 @@
 (defn sub-mapper [_]
   bearing-distance)
 
-(def sub-handler (partial ais-types/a 80 sub-mapper common/parse-binary))
+(def sub-seq-handler (partial ais-types/a 80 sub-mapper common/parse-binary))
 
 ;;
 ;; Waypoints
@@ -61,7 +61,7 @@
 (def polyline (list
   {:len            3 :desc "Shape of area" :tag "shape"     :fn (partial ais-types/e ais-vocab/subarea-shape)}
   {:len            2 :desc "Scale Factor"  :tag "scale"     :fn ais-types/u}
-  {:len sub-bits-len :desc "Waypoints"     :tag "waypoints" :fn sub-handler :a true}
+  {:len sub-bits-len :desc "Waypoints"     :tag "waypoints" :fn sub-seq-handler :a true}
   {:len            2 :desc "Spare"         :tag "spare"     :fn ais-types/x}
 ))
 
@@ -71,7 +71,7 @@
 (def polygon (list
   {:len            3 :desc "Shape of area" :tag "shape"    :fn (partial ais-types/e ais-vocab/subarea-shape)}
   {:len            2 :desc "Scale Factor"  :tag "scale"    :fn ais-types/u}
-  {:len sub-bits-len :desc "Vertices"      :tag "vertices" :fn sub-handler :a true}
+  {:len sub-bits-len :desc "Vertices"      :tag "vertices" :fn sub-seq-handler :a true}
   {:len            2 :desc "Spare"         :tag "spare"    :fn ais-types/x}
 ))
 
@@ -94,7 +94,7 @@
 
 (def seq-handler (partial ais-types/a 87 field-mapper common/parse-binary))
 
-(def f1d23 (list
+(def d1f23 (list
   {:len       10 :desc "Message Linkage ID" :tag "linkage"  :fn ais-types/u}
   {:len        7 :desc "Notice Description" :tag "notice"   :fn (partial ais-types/e ais-vocab/area-notice-description)}
   {:len        4 :desc "Month (UTC)"        :tag "month"    :fn ais-types/u}

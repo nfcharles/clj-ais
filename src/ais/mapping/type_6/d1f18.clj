@@ -1,10 +1,10 @@
-(ns ais.mapping.type_6.f1d18
+(ns ais.mapping.type_6.d1f18
   (:require [ais.vocab :as ais-vocab]
             [ais.types :as ais-types]
             [ais.mapping.common :as common])
   (:gen-class))
 
-(def f1d18 (list
+(def d1f18 (list
   {:len  10 :desc "Message Linkage ID"   :tag "linkage"     :fn ais-types/u}
   {:len   4 :desc "Month (UTC)"          :tag "month"       :fn ais-types/u}
   {:len   5 :desc "Day (UTC)"            :tag "day"         :fn ais-types/u}

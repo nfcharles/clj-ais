@@ -52,11 +52,11 @@ Decoded messages were validated against the following online decoder
 |   1  | 28  | Route info addressed         |             |         |
 |   1  | 30  | Text description addressed   |             |         |
 |   1  | 32  | Tidal window                 |             |         |
-| 200  | 21  | ETA at lock/bridge/terminal  |             |         |
-| 200  | 22  | RTA at lock/bridge/termina   |             |         |
-| 200  | 55  | Number of persons on board   |             |         |
-| 235  | 10  | AtoN monitoring data (UK)    |             |         |
-| 250  | 10  | AtoN monitoring data (ROI)   |             |         |
+| 200  | 21  | ETA at lock/bridge/terminal  |      x      |         |
+| 200  | 22  | RTA at lock/bridge/termina   |      x      |         |
+| 200  | 55  | Number of persons on board   |      x      |         |
+| 235  | 10  | AtoN monitoring data (UK)    |      x      |         |
+| 250  | 10  | AtoN monitoring data (ROI)   |      x      |         |
 
 #### Type 8 subtypes
 | DAC     | FID | Description                         | Implemented | *Tested |

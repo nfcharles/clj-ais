@@ -1,10 +1,10 @@
-(ns ais.mapping.type_6.f1d12
+(ns ais.mapping.type_6.d1f12
   (:require [ais.vocab :as ais-vocab]
             [ais.types :as ais-types]
             [ais.mapping.common :as common])
   (:gen-class))
 
-(def f1d12 (list
+(def d1f12 (list
   {:len  30 :desc "Last Port Of Call"   :tag "lastport" :fn (partial ais-types/t ais-vocab/sixbit-ascii 5)}
   {:len   4 :desc "ETA month (UTC)"     :tag "lmonth"   :fn ais-types/u}
   {:len   5 :desc "ETA day (UTC)"       :tag "lday"     :fn ais-types/u}

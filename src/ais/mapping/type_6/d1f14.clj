@@ -1,4 +1,4 @@
-(ns ais.mapping.type_6.f1d14
+(ns ais.mapping.type_6.d1f14
   (:require [ais.vocab :as ais-vocab]
             [ais.types :as ais-types]
             [ais.mapping.common :as common])
@@ -23,7 +23,7 @@
 
 (def seq-handler (partial ais-types/a 93 field-mapper common/parse-binary))
 
-(def f1d14 (list
+(def d1f14 (list
   {:len        4 :desc "Month"   :tag "month"   :fn ais-types/u}
   {:len        5 :desc "Day"     :tag "day"     :fn ais-types/u}
   {:len bits-len :desc "Tidal's" :tag "tidals"  :fn seq-handler :a true}

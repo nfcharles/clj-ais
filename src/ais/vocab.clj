@@ -480,3 +480,10 @@
  6 "Reserved"
  7 "Reserved"
 })
+
+(def lbt-status-code {
+ 0 "Operational"
+ 1 "Limited operation"
+ 2 "Out of order"
+ 3 "N/A"
+})
