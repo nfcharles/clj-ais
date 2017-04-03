@@ -8,8 +8,8 @@
 (def circle_or_point (list
   {:len   3 :desc "Shape of area" :tag "shape"     :fn (partial ais-types/e ais-vocab/subarea-shape)}
   {:len   2 :desc "Scale Factor"  :tag "scale"     :fn ais-types/u}
-  {:len  25 :desc "Longitude"     :tag "lon"       :fn common/slon}
-  {:len  24 :desc "Latitude"      :tag "lat"       :fn common/slat}
+  {:len  25 :desc "Longitude"     :tag "lon"       :fn common/mlon}
+  {:len  24 :desc "Latitude"      :tag "lat"       :fn common/mlat}
   {:len   3 :desc "Precision"     :tag "precision" :fn ais-types/u}
   {:len  12 :desc "Radius"        :tag "radius"    :fn ais-types/u}
   {:len  18 :desc "Spare"         :tag "spare"     :fn ais-types/x}
@@ -18,8 +18,8 @@
 (def rectangle (list
   {:len   3 :desc "Shape of area" :tag "shape"       :fn (partial ais-types/e ais-vocab/subarea-shape)}
   {:len   2 :desc "Scale Factor"  :tag "scale"       :fn ais-types/u}
-  {:len  25 :desc "Longitude"     :tag "lon"         :fn common/slon}
-  {:len  24 :desc "Latitude"      :tag "lat"         :fn common/slat}
+  {:len  25 :desc "Longitude"     :tag "lon"         :fn common/mlon}
+  {:len  24 :desc "Latitude"      :tag "lat"         :fn common/mlat}
   {:len   3 :desc "Precision"     :tag "precision"   :fn ais-types/u}
   {:len   8 :desc "E dimension"   :tag "east"        :fn ais-types/u}
   {:len   8 :desc "N dimension"   :tag "north"       :fn ais-types/u}
@@ -30,8 +30,8 @@
 (def sector (list
   {:len   3 :desc "Shape of area"  :tag "shape"     :fn (partial ais-types/e ais-vocab/subarea-shape)}
   {:len   2 :desc "Scale Factor"   :tag "scale"     :fn ais-types/u}
-  {:len  25 :desc "Longitude"      :tag "lon"       :fn common/slon}
-  {:len  24 :desc "Latitude"       :tag "lat"       :fn common/slat}
+  {:len  25 :desc "Longitude"      :tag "lon"       :fn common/mlon}
+  {:len  24 :desc "Latitude"       :tag "lat"       :fn common/mlat}
   {:len   3 :desc "Precision"      :tag "precision" :fn ais-types/u}
   {:len  12 :desc "Radius"         :tag "radius"    :fn ais-types/u}
   {:len   9 :desc "Left Boudnary"  :tag "left"      :fn ais-types/u}

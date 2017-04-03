@@ -12,7 +12,7 @@
   {:len   6 :desc "Minute (UTC)"         :tag "minute"      :fn ais-types/u}
   {:len 120 :desc "Name of Port & Berth" :tag "portname"    :fn (partial ais-types/t ais-vocab/sixbit-ascii 20)}
   {:len  30 :desc "Destination"          :tag "destination" :fn (partial ais-types/t ais-vocab/sixbit-ascii 5)}
-  {:len  25 :desc "Longitude"            :tag "lon"         :fn common/slon}
-  {:len  24 :desc "Latitude"             :tag "lat"         :fn common/slat}
+  {:len  25 :desc "Longitude"            :tag "lon"         :fn common/mlon}
+  {:len  24 :desc "Latitude"             :tag "lat"         :fn common/mlat}
   {:len  43 :desc "Spare"                :tag "spare"       :fn ais-types/x}
 ))
