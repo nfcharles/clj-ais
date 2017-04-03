@@ -4,13 +4,19 @@
 
 (defn const [c & _] c)
 
-(def lon (partial ais-types/I (/ 1.0 600000) 4))
+(def x-scale  600000000) ;; 1/10
+(def l-scale   60000000) ;; 1/100
+(def m-scale    6000000) ;; 1/1000
+(def s-scale     600000) ;; 1/10000
 
-(def lat (partial ais-types/I (/ 1.0 600000) 4))
+(def lon (partial ais-types/I (/ 1.0 s-scale) 4))
+(def lat (partial ais-types/I (/ 1.0 s-scale) 4))
 
-(def slon (partial ais-types/I (/ 1.0 6000000) 3))
+(def mlon (partial ais-types/I (/ 1.0 m-scale) 3))
+(def mlat (partial ais-types/I (/ 1.0 m-scale) 3))
 
-(def slat (partial ais-types/I (/ 1.0 6000000) 3))
+(def xlon (partial ais-types/I (/ 1.0 x-scale) 1))
+(def xlat (partial ais-types/I (/ 1.0 x-scale) 1))
 
 (def speed (partial ais-types/U (/ 1.0 10) 1))
 
