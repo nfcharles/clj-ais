@@ -22,6 +22,7 @@
             [ais.mapping.type_20 :as type_20]
             [ais.mapping.type_21 :as type_21]
             [ais.mapping.type_22 :as type_22]
+            [ais.mapping.type_23 :as type_23]
             [ais.mapping.type_24 :as type_24]
             [ais.mapping.type_27 :as type_27])
   (:gen-class))
@@ -79,6 +80,7 @@
    20 type_20/mapping-20
    21 type_21/mapping-21
    22 type_22/mapping-22
+   23 type_23/mapping-23
    24 (type_24/determine-24-map bits)
    27 type_27/mapping-27
    (throw (java.lang.Exception. (format "No configuration found for type %s" msg-type)))))

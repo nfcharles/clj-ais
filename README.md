@@ -31,7 +31,7 @@ Decoded messages were validated against the following online decoder
 | 20   | Data Link Management Message          |      x      |         |
 | 21   | Aid-to-Navigation Report              |      x      |         |
 | 22   | Channel Management                    |      x      |    x    |
-| 23   | Group Assignment Command              |             |         |
+| 23   | Group Assignment Command              |      x      |    x    |
 | 24   | Static Data Report                    |      x      |    x    |
 | 25   | Single Slot Binary Message            |             |         |
 | 26   | Multi Slot Bin Message w/ Comm State  |             |         |

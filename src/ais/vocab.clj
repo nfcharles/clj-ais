@@ -487,3 +487,48 @@
  2 "Out of order"
  3 "N/A"
 })
+
+(def transmit-mode {
+ 0 "TxA/TxB, RxA/RxB (default)"
+ 1 "TxA, RxA/RxB"
+ 2 "TxB, RxA/RxB"
+ 3 "Reserved for Future Use"
+})
+
+(def station-type {
+  0 "All types of mobiles (default)"
+  1 "Reserved for future use"
+  2 "All types of Class B mobile stations"
+  3 "SAR airborne mobile station"
+  4 "Aid to Navigation station"
+  5 "Class B shipborne mobile station (IEC62287 only)"
+  6 "Regional use and inland waterways"
+  7 "Regional use and inland waterways"
+  8 "Regional use and inland waterways"
+  9 "Regional use and inland waterways"
+ 10 "Reserved for future use"
+ 11 "Reserved for future use"
+ 12 "Reserved for future use"
+ 13 "Reserved for future use"
+ 14 "Reserved for future use"
+ 15 "Reserved for future use"
+})
+
+(def station-interval {
+  0 "As given by the autonomous mode"
+  1 "10 Minutes"
+  2 "6 Minutes"
+  3 "3 Minutes"
+  4 "1 Minute"
+  5 "30 Seconds"
+  6 "15 Seconds"
+  7 "10 Seconds"
+  8 "5 Seconds"
+  9 "Next Shorter Reporting Interval"
+ 10 "Next Longer Reporting Interval"
+ 11 "Reserved for future use"
+ 12 "Reserved for future use"
+ 13 "Reserved for future use"
+ 14 "Reserved for future use"
+ 15 "Reserved for future use"
+})
