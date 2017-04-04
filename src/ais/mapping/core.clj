@@ -10,6 +10,7 @@
             [ais.mapping.type_5  :as type_5]
             [ais.mapping.type_6.core :as type_6]
             [ais.mapping.type_7  :as type_7]
+            [ais.mapping.type_8.core :as type_8]
             [ais.mapping.type_9  :as type_9]
             [ais.mapping.type_10 :as type_10]
             [ais.mapping.type_11 :as type_11]
@@ -68,6 +69,7 @@
     5 type_5/mapping-5
     6 (type_6/determine-6-map bits)
     7 type_7/mapping-7
+    8 (type_8/determine-8-map bits)
     9 type_9/mapping-9
    10 type_10/mapping-10
    11 type_11/mapping-11

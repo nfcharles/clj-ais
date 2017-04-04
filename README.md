@@ -7,35 +7,35 @@ Decoded messages were validated against the following online decoder
   - http://www.aggsoft.com/ais-decoder.htm
 
 ### Supported Types
-| Type | Description                           | Implemented | *Tested |
-| ---- | --------------------------------------|-------------|---------|
-|  1   | Position Report Class A               |      x      |    x    |
-|  2   | Position Report Class A               |      x      |    x    |
-|  3   | Position Report Class A               |      x      |    x    |
-|  4   | Base Station Report                   |      x      |    x    |
-|  5   | Static and Voyage Related Data        |      x      |    x    |
-|  **6 | Binary Addressed Message              |      x      |    x    |
-|  7   | Binary Acknowledge                    |      x      |         |
-|  8   | Binary Broadcast Message              |             |         |
-|  9   | Standard SAR Aircraft Position Report |      x      |         |
-| 10   | UTC/Date Inquiry                      |      x      |         |
-| 11   | UTC/Date Response                     |      x      |    x    |
-| 12   | Addressed Safety-Related Message      |      x      |         |
-| 13   | Safety-Related Acknowledgement        |      x      |         |
-| 14   | Safety-Related Broadcast Message      |      x      |         |
-| 15   | Interrogation                         |             |         |
-| 16   | Assingment Mode Command               |             |         |
-| 17   | DGNSS Binary Broadcast Message        |      x      |    x    |
-| 18   | Standard Class B CS Position Report   |      x      |    x    |
-| 19   | Extended Class B CS Position Report   |      x      |    x    |
-| 20   | Data Link Management Message          |      x      |         |
-| 21   | Aid-to-Navigation Report              |      x      |         |
-| 22   | Channel Management                    |      x      |    x    |
-| 23   | Group Assignment Command              |      x      |    x    |
-| 24   | Static Data Report                    |      x      |    x    |
-| 25   | Single Slot Binary Message            |             |         |
-| 26   | Multi Slot Bin Message w/ Comm State  |             |         |
-| 27   | Position Report For Long-Range Apps   |      x      |    x    |
+| Type  | Description                           | Implemented | *Tested |
+|-------| --------------------------------------|-------------|---------|
+|   1   | Position Report Class A               |      x      |    x    |
+|   2   | Position Report Class A               |      x      |    x    |
+|   3   | Position Report Class A               |      x      |    x    |
+|   4   | Base Station Report                   |      x      |    x    |
+|   5   | Static and Voyage Related Data        |      x      |    x    |
+|   6   | Binary Addressed Message              |      x      |    x    |
+|   7   | Binary Acknowledge                    |      x      |         |
+| **8   | Binary Broadcast Message              |      x      |    x    |
+|   9   | Standard SAR Aircraft Position Report |      x      |         |
+|  10   | UTC/Date Inquiry                      |      x      |         |
+|  11   | UTC/Date Response                     |      x      |    x    |
+|  12   | Addressed Safety-Related Message      |      x      |         |
+|  13   | Safety-Related Acknowledgement        |      x      |         |
+|  14   | Safety-Related Broadcast Message      |      x      |         |
+|  15   | Interrogation                         |             |         |
+|  16   | Assingment Mode Command               |             |         |
+|  17   | DGNSS Binary Broadcast Message        |      x      |    x    |
+|  18   | Standard Class B CS Position Report   |      x      |    x    |
+|  19   | Extended Class B CS Position Report   |      x      |    x    |
+|  20   | Data Link Management Message          |      x      |         |
+|  21   | Aid-to-Navigation Report              |      x      |         |
+|  22   | Channel Management                    |      x      |    x    |
+|  23   | Group Assignment Command              |      x      |    x    |
+|  24   | Static Data Report                    |      x      |    x    |
+|  25   | Single Slot Binary Message            |             |         |
+|  26   | Multi Slot Bin Message w/ Comm State  |             |         |
+|  27   | Position Report For Long-Range Apps   |      x      |    x    |
 
 <sub>** generic type implemented.  binary data is not decoded</sub>
 
