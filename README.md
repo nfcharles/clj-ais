@@ -35,7 +35,7 @@ Decoded messages were validated against the following online decoder
 | 24   | Static Data Report                    |      x      |    x    |
 | 25   | Single Slot Binary Message            |             |         |
 | 26   | Multi Slot Bin Message w/ Comm State  |             |         |
-| 27   | Position Report For Long-Range Apps   |             |         |
+| 27   | Position Report For Long-Range Apps   |      x      |    x    |
 
 <sub>** generic type implemented.  binary data is not decoded</sub>
 
