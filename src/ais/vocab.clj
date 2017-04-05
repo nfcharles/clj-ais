@@ -532,3 +532,99 @@
  14 "Reserved for future use"
  15 "Reserved for future use"
 })
+
+(def trend {
+  0 "steady"
+  1 "decreasing"
+  2 "increasing"
+  3 "N/A"
+})
+
+(def precipitation-type {
+ 0 "Reserved"
+ 1 "Rain"
+ 2 "Thunderstorm"
+ 3 "Freezing Rain"
+ 4 "Mixed/Ice"
+ 5 "Snow"
+ 6 "Reserved"
+ 7 "N/A (default)"
+})
+
+(def beaufort-scale {
+  0 "Calm"
+  1 "Light Air"
+  2 "Light Breeze"
+  3 "Gentle Breeze"
+  4 "Moderate Breeze"
+  5 "Fresh Breeze"
+  6 "Strong Breeze"
+  7 "High Wind"
+  8 "Gale"
+  9 "Strong Gale"
+ 10 "Storm"
+ 11 "Violent Storm"
+ 12 "Hurricane Force"
+ 13 "N/A (default)"
+ 14 "N/A (default)"
+ 15 "N/A (default)"
+})
+
+(def eri-classification-code {
+ 8000 "Vessel, type unknown"
+ 8010 "Motor freighter"
+ 8020 "Motor tanker"
+ 8021 "Motor tanker, liquid cargo, type N"
+ 8022 "Motor tanker, liquid cargo, type C"
+ 8023 "Motor tanker, dry cargo as if liquid (e.g. cement)"
+ 8030 "Container vessel"
+ 8040 "Gas tanker"
+ 8050 "Motor freighter, tug"
+ 8060 "Motor tanker, tug"
+ 8070 "Motor freighter with one or more ships alongside"
+ 8080 "Motor freighter with tanker"
+ 8090 "Motor freighter pushing one or more freighters"
+ 8100 "Motor freighter pushing at least one tank-ship"
+ 8110 "Tug, freighter"
+ 8120 "Tug, tanker"
+ 8130 "Tug freighter, coupled"
+ 8140 "Tug, freighter/tanker, coupled"
+ 8150 "Freightbarge"
+ 8160 "Tankbarge"
+ 8161 "Tankbarge, liquid cargo, type N"
+ 8162 "Tankbarge, liquid cargo, type C"
+ 8163 "Tankbarge, dry cargo as if liquid (e.g. cement)"
+ 8170 "Freightbarge with containers"
+ 8180 "Tankbarge, gas"
+ 8210 "Pushtow, one cargo barge"
+ 8220 "Pushtow, two cargo barges"
+ 8230 "Pushtow, three cargo barges"
+ 8240 "Pushtow, four cargo barges"
+ 8250 "Pushtow, five cargo barges"
+ 8260 "Pushtow, six cargo barges"
+ 8270 "Pushtow, seven cargo barges"
+ 8280 "Pushtow, eight cargo barges"
+ 8290 "Pushtow, nine or more barges"
+ 8310 "Pushtow, one tank/gas barge"
+ 8320 "Pushtow, two barges at least one tanker or gas barge"
+ 8330 "Pushtow, three barges at least one tanker or gas barge"
+ 8340 "Pushtow, four barges at least one tanker or gas barge"
+ 8350 "Pushtow, five barges at least one tanker or gas barge"
+ 8360 "Pushtow, six barges at least one tanker or gas barge"
+ 8370 "Pushtow, seven barges at least one tanker or gas barge"
+})
+
+(def hazard-code {
+ 0 "0 blue cones/lights"
+ 1 "1 blue cone/light"
+ 2 "2 blue cones/lights"
+ 3 "3 blue cones/lights"
+ 4 "4 B-Flag"
+ 5 "Unknown (default)"
+})
+
+(def load-status {
+ 0 "N/A (default)"
+ 1 "Unloaded"
+ 2 "Loaded"
+})

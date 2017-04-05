@@ -15,6 +15,11 @@
   ([scale d-places xformer rcrd bits]
     (xformer (U scale d-places rcrd bits))))
 
+(def U1 (partial U (/ 1.0 1) 1))
+(def U2 (partial U (/ 1.0 1) 2))
+(def U3 (partial U (/ 1.0 1) 3))
+(def U4 (partial U (/ 1.0 1) 4))
+
 (defn i [rcrd bits]
   "Parses bits into a signed integer."
   (if (= "0" (subs bits 0 1))
@@ -28,6 +33,11 @@
     (* (i rcrd bits) scale))
   ([scale d-places xformer rcrd bits]
     (xformer (I scale d-places rcrd bits))))
+
+(def I1 (partial I (/ 1.0 1) 1))
+(def I2 (partial I (/ 1.0 1) 2))
+(def I3 (partial I (/ 1.0 1) 3))
+(def I4 (partial I (/ 1.0 1) 4))
 
 (defn b [rcrd bits]
   "Parses bits into boolean."
