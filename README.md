@@ -14,9 +14,9 @@ Decoded messages were validated against the following online decoder
 |   3   | Position Report Class A               |      x      |    x    |
 |   4   | Base Station Report                   |      x      |    x    |
 |   5   | Static and Voyage Related Data        |      x      |    x    |
-|   6   | Binary Addressed Message              |      x      |    x    |
+|   6** | Binary Addressed Message              |      x      |    x    |
 |   7   | Binary Acknowledge                    |      x      |         |
-| **8   | Binary Broadcast Message              |      x      |    x    |
+|   8** | Binary Broadcast Message              |      x      |    x    |
 |   9   | Standard SAR Aircraft Position Report |      x      |         |
 |  10   | UTC/Date Inquiry                      |      x      |         |
 |  11   | UTC/Date Response                     |      x      |    x    |
@@ -37,7 +37,7 @@ Decoded messages were validated against the following online decoder
 |  26   | Multi Slot Bin Message w/ Comm State  |             |         |
 |  27   | Position Report For Long-Range Apps   |      x      |    x    |
 
-<sub>** generic type implemented.  binary data is not decoded</sub>
+<sub>** Subtypes that are not implemented use generic type decoding.</sub>
 
 #### Type 6 subtypes
 | DAC  | FID | Description                  | Implemented | *Tested |
@@ -72,10 +72,10 @@ Decoded messages were validated against the following online decoder
 |       1 |  26 | Environmental                       |             |         |
 |       1 |  27 | Route info broadcast                |             |         |
 |       1 |  29 | Text description broadcast          |             |         |
-|       1 |  31 | Meteorological and hydrological     |             |         |
-|     200 |  10 | Ship static and voyage related data |             |         |
+|       1 |  31 | Meteorological and hydrological     |      x      |    x    |
+|     200 |  10 | Ship static and voyage related data |      x      |    x    |
 |     200 |  23 | EMMA warning report                 |             |         |
-|     200 |  24 | Water levels                        |             |         |
+|     200 |  24 | Water levels                        |      x      |    x    |
 |     200 |  40 | Signal status                       |             |         |
 
 <sub>*Tested: This refers to live testing against actual AIS sentences.</sub>

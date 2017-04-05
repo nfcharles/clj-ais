@@ -9,12 +9,10 @@
 (def m-scale      60000) ;; 1/1000
 (def s-scale     600000) ;; 1/10000
 
-(def lon (partial ais-types/I (/ 1.0 s-scale) 4))
-(def lat (partial ais-types/I (/ 1.0 s-scale) 4))
-
+(def lon  (partial ais-types/I (/ 1.0 s-scale) 4))
+(def lat  (partial ais-types/I (/ 1.0 s-scale) 4))
 (def mlon (partial ais-types/I (/ 1.0 m-scale) 3))
 (def mlat (partial ais-types/I (/ 1.0 m-scale) 3))
-
 (def xlon (partial ais-types/I (/ 1.0 x-scale) 1))
 (def xlat (partial ais-types/I (/ 1.0 x-scale) 1))
 
