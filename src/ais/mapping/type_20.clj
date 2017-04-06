@@ -1,5 +1,6 @@
 (ns ais.mapping.type_20
   (:require [ais.types :as ais-types]
+            [ais.util :as ais-util]
             [ais.mapping.common :as common])
   (:gen-class))
 
@@ -16,7 +17,7 @@
 
 (def bits-len (partial ais-types/array-bit-len 4 30))
 
-(def seq-handler (partial ais-types/a 30 field-mapper common/parse-binary))
+(def seq-handler (partial ais-types/a 30 field-mapper ais-util/parse-binary))
 
 (def mapping-20 (list
   {:len        6 :desc "Message Type"     :tag "type"    :fn (partial common/const 20)}

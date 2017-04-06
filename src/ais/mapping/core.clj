@@ -93,6 +93,6 @@
   "Decodes complete ais message"
   (let [[acc collector] (collectors data-format)
         bits (ais-util/pad (ais-util/payload->binary payload) fill)]
-    (common/parse-binary (field-parsers msg-type bits)
-                         (parse-tags (acc) collector tags (if (nil? tag-block) "" tag-block))
-                         collector bits)))
+    (ais-util/parse-binary (field-parsers msg-type bits)
+                           (parse-tags (acc) collector tags (if (nil? tag-block) "" tag-block))
+                           collector bits)))

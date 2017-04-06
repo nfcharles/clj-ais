@@ -12,7 +12,7 @@
   {:len   5 :desc "Aid type"                 :tag "aid_type"     :fn (partial ais-types/e ais-vocab/nav-aid-type)}
   {:len 120 :desc "Name"                     :tag "name"         :fn (partial ais-types/t ais-vocab/sixbit-ascii 20)}
   {:len   1 :desc "Position Accuracy"        :tag "accuracy"     :fn ais-types/b}
-  {:len  28 :desc "Longtitude"               :tag "lon"          :fn common/lon}
+  {:len  28 :desc "Longitude"                :tag "lon"          :fn common/lon}
   {:len  27 :desc "Latitude"                 :tag "lat"          :fn common/lat}
   {:len   9 :desc "Dimension to Bow"         :tag "to_bow"       :fn ais-types/u}
   {:len   9 :desc "Dimension to Stern"       :tag "to_stern"     :fn ais-types/u}

@@ -1,6 +1,7 @@
 (ns ais.mapping.type_6.d1f23
   (:require [ais.vocab :as ais-vocab]
             [ais.types :as ais-types]
+            [ais.util :as ais-util]
             [ais.mapping.common :as common])
   (:gen-class))
 
@@ -53,7 +54,7 @@
 (defn sub-mapper [_]
   bearing-distance)
 
-(def sub-seq-handler (partial ais-types/a 80 sub-mapper common/parse-binary))
+(def sub-seq-handler (partial ais-types/a 80 sub-mapper ais-util/parse-binary))
 
 ;;
 ;; Waypoints
@@ -93,7 +94,7 @@
 
 (def bits-len (partial ais-types/array-bit-len 10 87))
 
-(def seq-handler (partial ais-types/a 87 field-mapper common/parse-binary))
+(def seq-handler (partial ais-types/a 87 field-mapper ais-util/parse-binary))
 
 (def d1f23 (list
   {:len       10 :desc "Message Linkage ID" :tag "linkage"  :fn ais-types/u}

@@ -4,6 +4,7 @@
             [ais.mapping.common :as common])
   (:gen-class))
 
+
 (def d200f10 (list
   {:len 48 :desc "European Vessel ID"    :tag "vin"       :fn (partial ais-types/t ais-vocab/sixbit-ascii 8)}
   {:len 13 :desc "Length of Ship"        :tag "length"    :fn ais-types/u}

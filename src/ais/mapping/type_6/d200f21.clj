@@ -15,6 +15,6 @@
   {:len  5 :desc "ETA hour"           :tag "hour"       :fn ais-types/u}
   {:len  6 :desc "ETA minute"         :tag "minute"     :fn ais-types/u}
   {:len  3 :desc "Assisting Tugs"     :tag "tugs"       :fn ais-types/u}
-  {:len 12 :desc "Air Draught"        :tag "airdraught" :fn ais-types/u}
+  {:len 12 :desc "Air Draught"        :tag "airdraught" :fn (partial ais-types/U 0.01 1)}
   {:len  5 :desc "Spare"              :tag "spare"      :fn ais-types/x}
 ))

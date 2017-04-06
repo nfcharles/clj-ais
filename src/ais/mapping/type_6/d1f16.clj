@@ -1,6 +1,5 @@
 (ns ais.mapping.type_6.d1f16
-  (:require [ais.vocab :as ais-vocab]
-            [ais.types :as ais-types]
+  (:require [ais.types :as ais-types]
             [ais.mapping.common :as common])
   (:gen-class))
 

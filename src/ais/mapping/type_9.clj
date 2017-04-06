@@ -11,9 +11,9 @@
   {:len 12 :desc "Altitude"                 :tag "alt"      :fn ais-types/u}
   {:len 10 :desc "Speed Over Ground (SOG)"  :tag "speed"    :fn ais-types/u}
   {:len  1 :desc "Position Accuracy"        :tag "accuracy" :fn ais-types/u}
-  {:len 28 :desc "Longtitude"               :tag "lon"      :fn common/lon}
+  {:len 28 :desc "Lontitude"                :tag "lon"      :fn common/lon}
   {:len 27 :desc "Latitude"                 :tag "lat"      :fn common/lat}
-  {:len 12 :desc "Course Over Ground (COG)" :tag "course"   :fn (partial ais-types/U (/ 1.0 10) 1)}
+  {:len 12 :desc "Course Over Ground (COG)" :tag "course"   :fn common/course}
   {:len  6 :desc "Time Stamp"               :tag "second"   :fn ais-types/u}
   {:len  8 :desc "Regional Reservered"      :tag "regional" :fn ais-types/x}
   {:len  1 :desc "DTE"                      :tag "dte"      :fn ais-types/b}

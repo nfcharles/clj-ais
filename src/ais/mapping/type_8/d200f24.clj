@@ -1,6 +1,7 @@
 (ns ais.mapping.type_8.d200f24
   (:require [ais.types :as ais-types]
             [ais.vocab :as ais-vocab]
+            [ais.util :as ais-util]
             [ais.mapping.common :as common])
   (:gen-class))
 
@@ -15,7 +16,7 @@
 
 (def bits-len (partial ais-types/array-bit-len 4 25))
 
-(def seq-handler (partial ais-types/a 25 field-mapper common/parse-binary))
+(def seq-handler (partial ais-types/a 25 field-mapper ais-util/parse-binary))
 
 (def d200f24 (list
   {:len       12 :desc "UN Country Code" :tag "country" :fn (partial ais-types/t ais-vocab/sixbit-ascii 2)}
