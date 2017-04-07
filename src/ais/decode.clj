@@ -36,13 +36,13 @@
 (defn csv-write [writer data]
   (csv/write-csv writer data))
 
-(def writer-proxy (hash-map
+(def writer-factory (hash-map
  "json" json-write
  "csv"  csv-write))
 
 (defn- write [filename out-format lines]
   (with-open [writer (clojure.java.io/writer filename)]
-    ((writer-proxy out-format) writer lines)))
+    ((writer-factory out-format) writer lines)))
 
 ;;---
 ;; Core
