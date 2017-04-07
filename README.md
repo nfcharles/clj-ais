@@ -23,7 +23,7 @@ Decoded messages were validated against the following online decoder
 |  12   | Addressed Safety-Related Message      |      x      |         |
 |  13   | Safety-Related Acknowledgement        |      x      |         |
 |  14   | Safety-Related Broadcast Message      |      x      |         |
-|  15   | Interrogation                         |             |         |
+|  15   | Interrogation                         |      x      |    x    |
 |  16   | Assingment Mode Command               |             |         |
 |  17   | DGNSS Binary Broadcast Message        |      x      |    x    |
 |  18   | Standard Class B CS Position Report   |      x      |    x    |
