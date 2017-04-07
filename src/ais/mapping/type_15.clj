@@ -46,7 +46,7 @@
       {:len 12 :desc "Slot Offset"  :tag "offset" :fn ais-types/u})))
 
 (def mapping-15-110
-  (cons mapping-15-base {:len bits-len :desc "Types" :tag "types" :fn seq-handler :a true}))
+  (concat mapping-15-base (list {:len bits-len :desc "Types" :tag "types" :fn seq-handler :a true})))
 
 (def mapping-15-112 (list
   (concat

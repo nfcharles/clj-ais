@@ -24,7 +24,7 @@ Decoded messages were validated against the following online decoder
 |  13   | Safety-Related Acknowledgement        |      x      |         |
 |  14   | Safety-Related Broadcast Message      |      x      |         |
 |  15   | Interrogation                         |      x      |    x    |
-|  16   | Assingment Mode Command               |             |         |
+|  16   | Assignment Mode Command               |      x      |         |
 |  17   | DGNSS Binary Broadcast Message        |      x      |    x    |
 |  18   | Standard Class B CS Position Report   |      x      |    x    |
 |  19   | Extended Class B CS Position Report   |      x      |    x    |
