@@ -33,7 +33,7 @@ Decoded messages were validated against the following online decoder
 |  22   | Channel Management                    |      x      |    x    |
 |  23   | Group Assignment Command              |      x      |    x    |
 |  24   | Static Data Report                    |      x      |    x    |
-|  25   | Single Slot Binary Message            |             |         |
+|  25   | Single Slot Binary Message            |      x      |    x    |
 |  26   | Multi Slot Bin Message w/ Comm State  |             |         |
 |  27   | Position Report For Long-Range Apps   |      x      |    x    |
 
