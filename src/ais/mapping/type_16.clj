@@ -22,7 +22,7 @@
 (def seq-handler (partial ais-types/a 52 field-mapper ais-util/parse-binary))
 
 (def mapping-16-base  (list
-  {:len  6 :desc "Message Type"     :tag "type"   :fn (partial common/const 15)}
+  {:len  6 :desc "Message Type"     :tag "type"   :fn (partial common/const 16)}
   {:len  2 :desc "Repeat Indicator" :tag "repeat" :fn ais-types/u}
   {:len 30 :desc "Source MMSI"      :tag "mmsi"   :fn ais-types/u}
   {:len  2 :desc "Spare"            :tag "spare"  :fn ais-types/x}
