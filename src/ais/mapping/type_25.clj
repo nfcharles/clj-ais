@@ -13,31 +13,41 @@
   {:len  1 :desc "Binary Data Flag"      :tag "structured" :fn ais-types/b}
 ))
 
-(def addressed-map
+(defn addr-map [len]
   (concat
     mapping-25-base
     (list
       {:len  30 :desc "Destination MMSI" :tag "dest_mmsi" :fn ais-types/u}
-      {:len 128 :desc "Data"             :tag "data"      :fn ais-types/d})))
+      {:len len :desc "Data"             :tag "data"      :fn ais-types/d})))
 
-(def structured-map
+(defn strct-map [len]
   (concat
     mapping-25-base
     (list
       {:len  10 :desc "DAC"  :tag "dac"  :fn ais-types/u}
       {:len   6 :desc "FID"  :tag "fid"  :fn ais-types/u}
-      {:len 128 :desc "Data" :tag "data" :fn ais-types/d})))
+      {:len len :desc "Data" :tag "data" :fn ais-types/d})))
 
-(def default-map
+(defn addr-strct-map [len]
   (concat
     mapping-25-base
     (list
-      {:len 128 :desc "Data" :tag "data" :fn ais-types/d})))
+      {:len  30 :desc "Destination MMSI" :tag "dest_mmsi" :fn ais-types/u}
+      {:len  10 :desc "DAC"              :tag "dac"       :fn ais-types/u}
+      {:len   6 :desc "FID"              :tag "fid"       :fn ais-types/u}
+      {:len len :desc "Data"             :tag "data"      :fn ais-types/d})))
+
+(defn default-map [len]
+  (concat
+    mapping-25-base
+    (list
+      {:len len :desc "Data" :tag "data" :fn ais-types/d})))
 
 (defn determine-25-map [bits]
-  (let [addressed (ais-types/b nil (subs bits 38 39))
-        structured (ais-types/b nil (subs bits 39 40))]
+  (let [addr (ais-types/b nil (subs bits 38 39))
+        strct (ais-types/b nil (subs bits 39 40))]
     (cond
-      addressed  addressed-map
-      structured structured-map
-      :else      default-map)))
+      (and addr strct) (addr-strct-map (min (- (count bits) 86) 128))
+      addr (addr-map (min (- (count bits) 70) 128))
+      strct (strct-map (min (- (count bits) 56) 128))
+      :else (default-map (min (- (count bits) 40) 128)))))

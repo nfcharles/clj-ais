@@ -64,9 +64,18 @@
   "Parses bits into spare of reserve bits (noop)."
   bits)
 
+(defn bin->hex [bits]
+  (format "%02X" (Integer/parseInt bits 2)))
+
+(defn- pad [source n]
+  (str (apply str (repeat n "0")) source))
+
+;; TODO: Optimize: suboptimal implementation!
 (defn d [rcrd bits]
-  "Data bits - uninterpreted binary (noop)."
-  bits)
+  "Data bits - uninterpreted binary converted to hex."
+  (let [n (mod (count bits) 8)]
+    (clojure.string/join " "
+      (map #(bin->hex (apply str %)) (partition 8 (pad bits n))))))
 
 (defn array-bit-len [max-size len rcrd bits]
   "Returns length of array bitfield.  The count of elements in the
