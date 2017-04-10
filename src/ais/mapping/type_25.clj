@@ -13,26 +13,31 @@
   {:len  1 :desc "Binary Data Flag"      :tag "structured" :fn ais-types/b}
 ))
 
-(def addressed (list
-  {:len  30 :desc "Destination MMSI" :tag "dest_mmsi" :fn ais-types/u}
-  {:len 128 :desc "Data"             :tag "data"      :fn ais-types/d}
-))
+(def addressed-map
+  (concat
+    mapping-25-base
+    (list
+      {:len  30 :desc "Destination MMSI" :tag "dest_mmsi" :fn ais-types/u}
+      {:len 128 :desc "Data"             :tag "data"      :fn ais-types/d})))
 
-(def application-id (list
-  {:len  10 :desc "DAC"  :tag "dac"  :fn ais-types/u}
-  {:len   6 :desc "FID"  :tag "fid"  :fn ais-types/u}
-  {:len 128 :desc "Data" :tag "data" :fn ais-types/d}
-))
+(def structured-map
+  (concat
+    mapping-25-base
+    (list
+      {:len  10 :desc "DAC"  :tag "dac"  :fn ais-types/u}
+      {:len   6 :desc "FID"  :tag "fid"  :fn ais-types/u}
+      {:len 128 :desc "Data" :tag "data" :fn ais-types/d})))
 
-(def default (list
-  {:len 128 :desc "Data"          :tag "data"   :fn ais-types/d}
-))
+(def default-map
+  (concat
+    mapping-25-base
+    (list
+      {:len 128 :desc "Data" :tag "data" :fn ais-types/d})))
 
 (defn determine-25-map [bits]
-  (println (format "BIT-LEN: %d" (count bits)))
   (let [addressed (ais-types/b nil (subs bits 38 39))
         structured (ais-types/b nil (subs bits 39 40))]
     (cond
-      addressed  (concat mapping-25-base addressed)
-      structured (concat mapping-25-base application-id)
-      :else      (concat mapping-25-base default))))
+      addressed  addressed-map
+      structured structured-map
+      :else      default-map)))
