@@ -34,7 +34,7 @@ Decoded messages were validated against the following online decoder
 |  23   | Group Assignment Command              |      x      |    x    |
 |  24   | Static Data Report                    |      x      |    x    |
 |  25   | Single Slot Binary Message            |      x      |    x    |
-|  26   | Multi Slot Bin Message w/ Comm State  |             |         |
+|  26   | Multi Slot Bin Message w/ Comm State  |      x      |    x    |
 |  27   | Position Report For Long-Range Apps   |      x      |    x    |
 
 <sub>** Subtypes that are not implemented use generic type decoding.</sub>

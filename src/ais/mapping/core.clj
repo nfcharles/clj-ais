@@ -95,12 +95,13 @@
    27 type_27/mapping-27
    (throw (java.lang.Exception. (format "No configuration found for type %s" msg-type)))))
 
-(def tags ["c" "s" "n"])
+(def tag-labels ["c" "s" "n"])
 
-(defn parse [data-format msg-type tag-block payload fill]
+(defn parse [data-format msg-type tag-blk payload fill]
   "Decodes complete ais message"
   (let [[acc collector] (collectors data-format)
-        bits (ais-util/pad (ais-util/payload->binary payload) fill)]
+        bits (ais-util/payload->binary payload fill)]
     (ais-util/parse-binary (field-parsers msg-type bits)
-                           (parse-tags (acc) collector tags (if (nil? tag-block) "" tag-block))
-                           collector bits)))
+                           (parse-tags (acc) collector tag-labels (or tag-blk ""))
+                           collector
+                           bits)))
