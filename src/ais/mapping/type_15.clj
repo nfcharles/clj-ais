@@ -48,12 +48,12 @@
 (def mapping-15-110
   (concat mapping-15-base (list {:len bits-len :desc "Types" :tag "types" :fn seq-handler :a true})))
 
-(def mapping-15-112 (list
+(def mapping-15-112
   (concat
     mapping-15-base
     (list
-      {:len bits-len :desc "Types" :tag "types"  :fn seq-handler :a true}
-      {:len        4 :desc "Spare" :tag "spare"  :fn ais-types/x}))))
+      {:len bits-len :desc "Types" :tag "types" :fn seq-handler :a true}
+      {:len        4 :desc "Spare" :tag "spare" :fn ais-types/x})))
 
 (def mapping-15-2-spare
   (concat mapping-15  (list {:len 2 :desc "Spare" :tag "spare" :fn ais-types/x})))
