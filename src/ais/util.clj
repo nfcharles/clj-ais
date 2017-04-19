@@ -8,10 +8,10 @@
 (def not-nil? (complement nil?))
 
 (defn timestamp->iso 
-  ([^long ts formatter]
-    (f/unparse formatter (c/from-long ts)))
+  ([^long ts fmt]
+    (f/unparse (f/formatter fmt) (c/from-long ts)))
   ([^long ts]
-    (timestamp->iso ts (f/formatter "yyyyMMddHHmmss"))))
+    (timestamp->iso ts "yyyyMMddHHmmss")))
 
 (defn checksum [msg]
   (loop [mseq (seq msg)

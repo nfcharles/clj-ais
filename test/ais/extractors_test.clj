@@ -3,58 +3,72 @@
             [ais.extractors :refer :all]))
 
 
-(def aivdm-message "\\c:1448312100,t:1448312099*00\\!AIVDM,1,1,,B,35NVMmg00026=kRGFbD=4a;N0UFC,0*16")
-(def aivdo-message "\\c:1448312100,s:FooBar,n:12345*00\\!AIVDO,1,1,,B,35NVMmg00026=kRGFbD=4a;N0UFC,0*16")
-(def tricky-message "\\c:1448312100,t:1448341521*00\\!AIVDM,1,1,,B,13n:Tq0000PJ3QpQivJ>42An26SH,0*52")
-(def group-message (list "\\g:1-2-1996,c:1446625797*57\\!AIVDM,2,1,6,A,581:K8@2<lS5KL@;V20dTpN0E8T>22222222221@BPR=>6e50HT2DQ@EDlp8,0*19" "\\g:2-2-1996*5A\\!AIVDM,2,2,6,A,88888888880,2*22"))
+(def msg-1  "AIVDM,1,1,2,A,0ABCDEF,0*01")
+(def tks-1 {
+ :ty 0
+ :tg nil
+ :en "AIVDM,1,1,2,A,0ABCDEF,0"
+ :fc 1
+ :fn 1
+ :pl "0ABCDEF"
+ :fl 0
+ :ck "01"
+})
+
+(def msg-2  "AIVDM,2,1,7,B,5ABCDEF,2*3F")
+(def tks-2 {
+ :ty 5
+ :tg nil
+ :en "AIVDM,2,1,7,B,5ABCDEF,2"
+ :fc 2
+ :fn 1
+ :pl "5ABCDEF"
+ :fl 2
+ :ck "3F"
+})
+
+(def msg-3  "\\s:foobar,c:1448312100,t:1448312099*00\\AIVDM,1,1,,,:ABCDEF,3*1B")
+(def tks-3 {
+ :ty 10
+ :tg "\\s:foobar,c:1448312100,t:1448312099*00\\"
+ :en "AIVDM,1,1,,,:ABCDEF,3"
+ :fc 1
+ :fn 1
+ :pl ":ABCDEF"
+ :fl 3
+ :ck "1B"
+})
+
+(def msg-4  "FOOBAR,2,1,7,B,5ABCDEF,0*3F")
+(def tks-4 nil)
+
+;; ---
+;; Tests
+;; ---
+
+(deftest tokenize-test
+  (testing "Parse valid message w/o tags - 1"
+    (is (= (tokenize msg-1) tks-1)))
+  (testing "Parse valid message w/o tags - 2"
+    (is (= (tokenize msg-2) tks-2)))
+  (testing "Parse message with tags"
+    (is (= (tokenize msg-3) tks-3)))
+  (testing "Parse invalid message"
+    (is (= (tokenize msg-4) tks-4))))
 
 
-(def case-1 (hash-map
-  "c"          1448312100
-  "t"          1448312099
-  "tags"       "\\c:1448312100,t:1448312099*00\\"
-  "pac-type"   "AIVDM"
-  "frag-count" 1
-  "frag-num"   1
-  "frag-info"  [1 1]
-  "seq-id"     ""
-  "radio-ch"   "B"
-  "payload"    "35NVMmg00026=kRGFbD=4a;N0UFC"
-  "fill-bits"  0
-  "checksum"   "16"
-  "env-chksum" ["AIVDM,1,1,,B,35NVMmg00026=kRGFbD=4a;N0UFC,0", "16"] ))
+(def tags "\\g:1-2-1996,s:foobar,c:1448312100,t:1448312099*00\\")
 
-(def case-2 (hash-map
-  "c"          1448312100
-  "s"          "FooBar"
-  "n"          12345
-  "tags"       "\\c:1448312100,s:FooBar,n:12345*00\\"
-  "pac-type"   "AIVDO"
-  "frag-count" 1
-  "frag-num"   1
-  "frag-info"  [1 1]
-  "seq-id"     ""
-  "radio-ch"   "B"
-  "payload"    "35NVMmg00026=kRGFbD=4a;N0UFC"
-  "fill-bits"  0
-  "checksum"   "16"
-  "env-chksum" ["AIVDO,1,1,,B,35NVMmg00026=kRGFbD=4a;N0UFC,0" "16"] ))
-
-(deftest extractor-test
-  (testing "Case 1"
-    (doseq [[field value] case-1 ]
-      (is (= (parse field aivdm-message) value))))
-  (testing "Case 2"
-    (doseq [[field value] case-2 ]
-      (is (= (parse field aivdo-message) value)))))
-
-(deftest extract-group-test
-  (testing "Group extraction"
-    (is (= (parse "g" (nth group-message 0)) "2-1996"))
-    (is (= (parse "g" (nth group-message 1)) "2-1996"))))
-
-(deftest extract-tags-test
-  (testing "Tag extraction"
-    (is (= (parse "n" tricky-message) nil))
-    (is (= (parse "c" tricky-message) 1448312100))
-    (is (= (parse "t" tricky-message) 1448341521))))
+(deftest parse-test
+  (testing "Parse group"
+    (is (= (parse "g" tags) "2-1996")))
+  (testing "Parse group"
+    (is (= (parse "n" tags) nil)))
+  (testing "Parse group"
+    (is (= (parse "c" tags) 1448312100)))
+  (testing "Parse group"
+    (is (= (parse "t" tags) 1448312099)))
+  (testing "Parse group"
+    (is (= (parse "s" tags) "foobar")))
+  (testing "Parse group"
+    (is (= (parse "tags" tags) tags))))

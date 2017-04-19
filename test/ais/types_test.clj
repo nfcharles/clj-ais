@@ -1,8 +1,8 @@
 (ns ais.types-test
-  (:require [clojure.test :refer :all]
-            [ais.core  :refer [data-collector]]
-            [ais.mapping.core :refer [parse-binary]]
-            [ais.types :refer :all]))
+  (:require [clojure.test     :refer :all]
+            [ais.mapping.core :refer [collectors]]
+            [ais.util         :refer [parse-binary]]
+            [ais.types        :refer :all]))
 
 (deftest u-test
   (testing "Parse unsigned int"
@@ -134,7 +134,7 @@
   known_size_array_entry-fields)
 
 ;; array length function
-(def known_size-len (partial array-bit-len 3 6))
+(def known_size-len (partial static-array-bit-len 3 6 "size"))
 
 (def known_size_array-fields (list
   {:len              3 :desc "Three" :tag "three" :fn u}
@@ -151,6 +151,57 @@
 (def a_f3 "11")
 (def a_entry (str a_f1 a_f2 a_f3))
 (def known_size_array-bits (str f1 f2 f3 a_entry a_entry a_entry))
+
+
+;;
+;; Test Case 2 - 1 : Error
+;;
+(def err-known_size_array-decoded {
+	"three" 3,
+	"four"  4,
+	"size"  4,
+	"array" [{
+		"one"   1,
+		"two"   2,
+		"three" 3
+	}, {
+		"one"   1,
+		"two"   2,
+		"three" 3
+	}, {
+		"one"   1,
+		"two"   2,
+		"three" 3
+	}]
+})
+
+(def err-known_size_array_entry-fields (list
+  {:len 2 :desc "One"   :tag "one"   :fn u}
+  {:len 2 :desc "Two"   :tag "two"   :fn u}
+  {:len 2 :desc "Three" :tag "three" :fn u}
+))
+
+(defn err-known_size-mapper [_]
+  err-known_size_array_entry-fields)
+
+;; array length function
+(def err-known_size-len (partial static-array-bit-len 3 6 "size"))
+
+(def err-known_size_array-fields (list
+  {:len                  3 :desc "Three" :tag "three" :fn u}
+  {:len                  3 :desc "Four"  :tag "four"  :fn u}
+  {:len                  3 :desc "Size"  :tag "size"  :fn u}
+  {:len err-known_size-len :desc "Array" :tag "array" :fn (partial a 6 err-known_size-mapper parse-binary) :a true}
+))
+
+(def f1  "011")
+(def f2  "100")
+(def f3  "100")
+(def a_f1 "01")
+(def a_f2 "10")
+(def a_f3 "11")
+(def a_entry (str a_f1 a_f2 a_f3))
+(def err-known_size_array-bits (str f1 f2 f3 a_entry a_entry a_entry))
 
 
 ;;
@@ -333,19 +384,23 @@
 ;;
 
 (deftest a-test
-  (let [[acc collector] (data-collector "json")]
+  (let [[acc collector] (collectors "json")]
     (testing "Parse binary array with simple fields"
-      (let [actual (parse-binary simple_array-fields acc collector simple_array-bits)]
+      (let [actual (parse-binary simple_array-fields (acc) collector simple_array-bits)]
         (is (= actual simple_array-decoded))))
 
     (testing "Parse binary array w/s size determined by prior field"
-      (let [actual (parse-binary known_size_array-fields acc collector known_size_array-bits)]
+      (let [actual (parse-binary known_size_array-fields (acc) collector known_size_array-bits)]
         (is (= actual known_size_array-decoded))))
 
+    ;; TODO: change to custom exception
+    (testing "Parse binary array w/s size determined by prior field - error case"
+      (is (thrown? java.lang.Exception (parse-binary err-known_size_array-fields (acc) collector err-known_size_array-bits))))
+
     (testing "Parse binary array with elements determined from dynamic mapper"
-      (let [actual (parse-binary dynamic_array-fields acc collector dynamic_mapped_array-bits)]
+      (let [actual (parse-binary dynamic_array-fields (acc) collector dynamic_mapped_array-bits)]
         (is (= actual dynamic_mapped_array-decoded))))
 
     (testing "Parse binary array with array elements"
-      (let [actual (parse-binary embedded_array-fields acc collector embedded_array-bits)]
+      (let [actual (parse-binary embedded_array-fields (acc) collector embedded_array-bits)]
         (is (= actual embedded_array-decoded))))))
