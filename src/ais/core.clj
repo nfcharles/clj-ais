@@ -33,6 +33,6 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (let [data-format (nth args 0)
-        message (nth args 1)]
-   (println (json/write-str (parse data-format [(ais-ex/tokenize message)])))))
+  (let [data-format "json"]
+    ;; TODO: use loop/recur instead of map
+    (println (json/write-str (parse data-format (map ais-ex/tokenize args))))))

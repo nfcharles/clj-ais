@@ -93,162 +93,95 @@ $ lein ubjarbar
 
 ### Single sentence decoding
 
-#### Type 1 - json output
+#### Type 1
 ```bash
-$ lein run -m ais.core json "\c:1448312100,t:1448312099*00\!AIVDM,1,1,,A,15RTgt0PAso;90TKcjM8h6g208CQ,0*4A" | python -m json.tool
+>  java -jar target/uberjar/ais-0.9.3-SNAPSHOT-standalone.jar "\c:1521252608,t:1521252607*00\!AIVDM,1,1,,B,159tImgP01IEFP0:S0kRTgv>00Ru,0*68" | python -m json.tool 
 ```
 
 #### Output
 ```json
 {
-    "accuracy": true, 
-    "course": 224.0, 
-    "heading": 215, 
-    "lat": 48.38163333333333, 
-    "lon": -123.39538333333333, 
-    "maneuver": "Not available (default)", 
-    "mmsi": 371798000, 
-    "radio": 34017, 
-    "raim": false, 
-    "repeat": 0, 
-    "second": 33, 
-    "spare": "000", 
-    "speed": 12.3, 
+    "accuracy": false,
+    "course": 65.8,
+    "heading": 511,
+    "lat": 18.436029802,
+    "line": null,
+    "lon": -93.221413888,
+    "maneuver": "Not available (default)",
+    "mmsi": 345971158,
+    "radio": 2237,
+    "raim": false,
+    "repeat": 0,
+    "second": 7,
+    "spare": "000",
+    "speed": 0.1,
     "station": null,
-    "status": "Under way using engine", 
-    "timestamp": "20151123T155500Z",
-    "turn": -720,
-    "type": 3
+    "status": "Not defined (default)",
+    "timestamp": "20180317021008",
+    "turn": -731,
+    "type": 1
 }
 ```
 
-#### Type 1 - csv output
+#### Type 24
 ```bash
-$ lein run -m ais.core csv "\c:1448312100,t:1448312099*00\!AIVDM,1,1,,A,15RTgt0PAso;90TKcjM8h6g208CQ,0*4A" | python -m json.tool
+> java -jar target/uberjar/ais-0.9.3-SNAPSHOT-standalone.jar "\c:1521252608*00\!AIVDM,1,1,,A,H7Og65QA8UHT4j11E9=DU@00000,2*6F" | python -m json.tool 
 ```
 
 #### Output
 ```json
-[
-    1
-    "20151123T155500Z", 
-    null,
-    null,
-    0, 
-    371798000, 
-    "Under way using engine", 
-    -720, 
-    12.3, 
-    true, 
-    -123.39538333333333, 
-    48.38163333333333, 
-    224.0, 
-    215, 
-    33, 
-    "Not available (default)", 
-    "000", 
-    false, 
-    34017
-]
+{
+    "line": null,
+    "mmsi": 503039510,
+    "partno": 0,
+    "repeat": 0,
+    "shipname": "TRIVIAL PURSUIT",
+    "spare": "0000",
+    "station": null,
+    "timestamp": "20180317021008",
+    "type": 24
+}
 ```
 
-## Sample Decoding Application
 
-clj-ais is packaged with a sample decoding application*.  It's instrumented with basic logging and metrics.  See examples below.
 
-<sub>*This is a naive implemenation.  Multipart messages received out of order are simply dropped; also, unpaired fragments are dropped.</sub>
-### Examples
+### Multi setence decoding
 
-#### Decode message type 25
+#### Type 5
 ```bash
-$ export INPUT=source/sample-25.nmea
-$ export TYPES=25
-$ export OUTPUT=output/sample-decoded-25
-$ bin/ais-decode --threads 1 --output-format json $INPUT $TYPES $OUTPUT
-JAVA_OPTS=-Xms2048m -Xmx4096m
-RELEASE_JAR=target/uberjar/ais-0.9.0-SNAPSHOT-standalone.jar
-INPUT=source/sample.gfnmea
-MESSAGE_TYPES=25
-THREADS=1
-OUTPUT_FORMAT=json
-OUTPUT_NAME=sample-decoded-25
-BUFFER_LEN=50000
-INCLUDE TYPES: #{25}
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:67] - count.dropped.total=160149
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:68] - count.invalid.total=4446
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:69] - count.error.total=4446
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-0=5
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-1=74485
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-2=2444
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-3=15587
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-4=5791
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-5=12405
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-6=794
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-7=4
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-8=5273
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-9=299
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-10=5
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-11=69
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-12=1
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-13=2
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-14=10
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-15=201
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-16=2
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-17=1251
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-18=7250
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-19=273
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-20=1237
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-21=13943
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-22=5
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-23=184
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-24=4408
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-27=20
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-40=7
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-41=1
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-49=1
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-58=1
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-61=3
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:155] - count.decoder.thread_0=0
-17-04-10 00:41:34 ncharles-XPS-13-9360 INFO [ais.decode:156] - count.decoder.err.thread_0=0
-"Elapsed time: 1708.508363 msecs"
+> java -jar target/uberjar/ais-0.9.3-SNAPSHOT-standalone.jar "\c:1521252608*00\!AIVDM,2,1,2,A,53Wks?T00000PM8H001a<tl8u8000000000000160HE45tfA03jkk@DSSh00,0*04" "\c:1521252608*00\!AIVDM,2,2,2,A,00000000000,2*26" | python -m json.tool 
 ```
 
-#### Decode message types 1,2,3,5,18,19,24
-```bash
-$ export INPUT=source/sample.nmea
-$ export TYPES=1,2,3,5,18,19,24
-$ export OUTPUT=output/sample-decoded-1-2-3-4-5-18-19-24
-$ bin/ais-decode --threads 2 --output-format json $INPUT $TYPES $OUTPUT
-JAVA_OPTS=-Xms2048m -Xmx4096m
-RELEASE_JAR=target/uberjar/ais-0.9.0-SNAPSHOT-standalone.jar
-INPUT=source/sample.gfnmea
-MESSAGE_TYPES=1,2,3,5,18,19,24
-THREADS=2
-OUTPUT_FORMAT=json
-OUTPUT_NAME=sample-decoded-1-2-3-5-18-19-24
-BUFFER_LEN=50000
-INCLUDE TYPES: #{1 24 3 2 19 5 18}
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:67] - count.dropped.total=1434
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:68] - count.invalid.total=12
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:69] - count.error.total=12
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-4=192
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-7=1
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-9=10
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-11=1
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-15=25
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-20=23
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-21=1044
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:71] - count.dropped.type-27=138
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:155] - count.decoder.thread_1=30259
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:164] - writing sample-decoded-1-2-3-5-18-19-24-part-0-0.json
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:156] - count.decoder.err.thread_1=0
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:155] - count.decoder.thread_0=28900
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:156] - count.decoder.err.thread_0=0
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:164] - writing sample-decoded-1-2-3-5-18-19-24-part-1-0.json
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:166] - count.writer.thread_1=28900
-17-04-10 01:03:25 ncharles-XPS-13-9360 INFO [ais.decode:166] - count.writer.thread_0=30259
-"Elapsed time: 2989.639246 msecs"
+#### Output
+```json
+{
+    "ais_version": 1,
+    "callsign": "HGRF",
+    "day": 28,
+    "destination": "KOMARNO",
+    "draught": 1.5,
+    "dte": false,
+    "epfd": null,
+    "hour": 17,
+    "imo": 0,
+    "line": null,
+    "minute": 0,
+    "mmsi": 243071806,
+    "month": 2,
+    "repeat": 0,
+    "shipname": "ZSOMBOR",
+    "shiptype": "Cargo, all ships of this type",
+    "spare": "0",
+    "station": null,
+    "timestamp": "20180317021008",
+    "to_bow": 3,
+    "to_port": 4,
+    "to_starboard": 5,
+    "to_stern": 21,
+    "type": 5
+}
 ```
+
 
 ## Testing
 
@@ -267,8 +200,7 @@ Run integration tests
 ## TODO
 
 ### Implementation
-- Fix logging datetime format
-- Implement remaining types
+- Implement remaining sub-types
 
 ### Testing
 - More integration tests

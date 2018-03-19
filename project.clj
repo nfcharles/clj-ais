@@ -1,4 +1,4 @@
-(defproject ais "0.9.2-SNAPSHOT"
+(defproject ais "0.9.3-SNAPSHOT"
   :description "AIS (Automatic Identification System) decoding library"
   :url "https://github.com/nfcharles/clj-ais.git"
   :license {:name "Eclipse Public License"
@@ -14,12 +14,12 @@
   :repositories [["releases" "file:////home/ncharles/development/clojure/repos/local"]]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
-  ;:main ais.resilient_decoder
-  ;:aot [ais.resilient_decoder]
-  :main ais.decode
-  :aot [ais.decode]
-  :global-vars {*warn-on-reflection* true}
-  :jvm-opts ["-Dcom.sun.management.jmxremote"
-             "-Dcom.sun.management.jmxremote.ssl=false"
-             "-Dcom.sun.management.jmxremote.authenticate=false"
-             "-Dcom.sun.management.jmxremote.port=43210"])
+  ;:main ais.decode
+  :main ais.core
+  ;:aot [ais.decode]
+  :aot [ais.core]
+  :global-vars {*warn-on-reflection* true})
+  ;:jvm-opts ["-Dcom.sun.management.jmxremote"
+  ;           "-Dcom.sun.management.jmxremote.ssl=false"
+  ;           "-Dcom.sun.management.jmxremote.authenticate=false"
+  ;           "-Dcom.sun.management.jmxremote.port=43210"])

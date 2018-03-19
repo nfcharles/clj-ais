@@ -45,12 +45,12 @@
   (map read-string (ext_multi-raw regex msg)))
 
 (def -extractors (hash-map
- "g"          { :exp #"\\.*g:\d-(\d-\d+).*\\"                                  :fn #(ext-raw %1 %2) }
- "n"          { :exp #"\\.*n:(\d*).*\\"                                        :fn #(ext %1 %2) }
- "c"          { :exp #"\\.*c:(\d*).*\\"                                        :fn #(ext %1 %2) }
- "t"          { :exp #"\\.*t:(\d*).*\\"                                        :fn #(ext %1 %2) }
- "s"          { :exp #"\\.*s:(\w*).*\\"                                        :fn #(ext-raw %1 %2) }
- "tags"       { :exp #"^(\\.+\\)"                                              :fn #(ext-raw %1 %2) }))
+ "g"    { :exp #"\\.*g:\d-(\d-\d+).*\\" :fn #(ext-raw %1 %2) }
+ "n"    { :exp #"\\.*n:(\d*).*\\"       :fn #(ext %1 %2) }
+ "c"    { :exp #"\\.*c:(\d*).*\\"       :fn #(ext %1 %2) }
+ "t"    { :exp #"\\.*t:(\d*).*\\"       :fn #(ext %1 %2) }
+ "s"    { :exp #"\\.*s:(\w*).*\\"       :fn #(ext-raw %1 %2) }
+ "tags" { :exp #"^(\\.+\\)"             :fn #(ext-raw %1 %2) }))
 
 (defn parse [field msg]
   (let [ex (-extractors field)]

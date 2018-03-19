@@ -1,12 +1,13 @@
 (ns ais.decode
   (:require [clojure.core.async :as async]
+            [ais.logging :as ais-log]
             [taoensso.timbre :as logging]
             [ais.runner :as ais-runner])
   (:gen-class))
 
+
 (def stdin-reader
   (java.io.BufferedReader. *in*))
-
 
 (defn input-stream [reader]
   (async/to-chan (line-seq reader)))
@@ -29,7 +30,7 @@
 (defn -main
   [& args]
   (try
-    (ais-runner/configure-logging :std-err)
+    (ais-log/configure)
     (time (ais-runner/run (input-stream stdin-reader)
                           (parse-output-prefix args)
                           (parse-decode-types args)

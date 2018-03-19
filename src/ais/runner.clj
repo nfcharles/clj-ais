@@ -9,8 +9,7 @@
             [clojure.pprint :as pprint]
             [clojure.stacktrace :as strace]
             [clj-json.core :as json]
-            [taoensso.timbre :as logging]
-            [taoensso.timbre.appenders.core :as appenders])
+            [taoensso.timbre :as logging])
   (:gen-class))
 
 
@@ -184,9 +183,3 @@
     ;; until all writer threads are complete to prevent premature
     ;; termination of main thread.
     (async/<!! (writer out-format out-prefix n-threads out-ch))))
-
-
-(defn configure-logging [log-stream]
-  (logging/merge-config!
-    {:appenders {
-      :println (appenders/println-appender {:stream log-stream})}}))
